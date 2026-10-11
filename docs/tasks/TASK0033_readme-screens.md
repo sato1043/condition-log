@@ -228,7 +228,7 @@ relates-to:
 - [x] **撮り直しても同じ画像**（テスト用の端末）
 - [x] **失敗しても元へ戻る**（テスト用の端末）
 - [x] **画像に写るもの**（ユーザーの目）
-- [ ] **GitHub での README の表示**（`main` へ入れた後）
+- [x] **GitHub での README の表示**（`main` へ入れた後）
 
 結果は作業記録にある。
 
@@ -369,6 +369,13 @@ dart format --output=none --set-exit-if-changed lib test tool
 - 2026-10-10 ドキュメント: README へ「画面」の節（8 行 2 列）を足した。README が指す
   16 本のパスと `docs/images/screens/` の 16 枚は、集合として一致した。GitHub での
   表示は、`main` へ入れた後に確かめる（未検証）
+- 2026-10-11 GitHub での README の表示: `main` を push した後に確かめた
+    - ユーザーが GitHub のリポジトリのページを開き、README の「画面」の表が崩れずに
+      出ることを目で見た
+    - エージェントが、GitHub が配る画像 16 枚を curl で取り、`docs/images/screens/` の
+      16 枚と `cmp` で比べた。16 枚とも同じバイト列だった（食い違い 0 枚）
+    - エージェントの内蔵ブラウザは、画像の取得を遮られた（`ERR_BLOCKED_BY_CLIENT`）。
+      見た目は写せておらず、ユーザーの目で確かめた
 
 ## 裁定記録
 
