@@ -7,7 +7,7 @@ import 'day_start_hour.dart';
 class CalendarDay implements Comparable<CalendarDay> {
   CalendarDay(int year, int month, int day)
     : _date = DateTime.utc(year, month, day) {
-    if (_date.year != year || _date.month != month || _date.day != day) {
+    if (!_exists(year, month, day)) {
       // The date is left out: it can be a stored day, and the message
       // reaches the device log.
       throw ArgumentError('No such date');
@@ -15,6 +15,28 @@ class CalendarDay implements Comparable<CalendarDay> {
   }
 
   CalendarDay._(this._date);
+
+  /// Whether the calendar has the date. [DateTime] takes a date it has not
+  /// for a day further on.
+  static bool _exists(int year, int month, int day) {
+    final date = DateTime.utc(year, month, day);
+    return date.year == year && date.month == month && date.day == day;
+  }
+
+  /// The day [text] names in the form of [CalendarDay.isoDate], or null when
+  /// it names none: another form, or the form of a date the calendar has
+  /// not. For a text from outside the store, such as a location, where
+  /// naming no day is not a mistake of the program.
+  static CalendarDay? tryFromIsoDate(String text) {
+    final match = _isoDatePattern.firstMatch(text);
+    if (match == null) return null;
+    final (year, month, day) = (
+      int.parse(match[1]!),
+      int.parse(match[2]!),
+      int.parse(match[3]!),
+    );
+    return _exists(year, month, day) ? CalendarDay(year, month, day) : null;
+  }
 
   /// The day stored under [isoDate] (see [CalendarDay.isoDate]). Any other
   /// form throws, so a stored value never reads as some other day.
@@ -71,6 +93,11 @@ class CalendarDay implements Comparable<CalendarDay> {
 
   CalendarDay get previous =>
       CalendarDay._(_date.subtract(const Duration(days: 1)));
+
+  /// The day [days] after this one, or before it for a negative count.
+  /// Counted on the date alone, so no daylight-saving shift moves it.
+  CalendarDay plusDays(int days) =>
+      CalendarDay._(_date.add(Duration(days: days)));
 
   /// The `YYYY-MM-DD` form records are stored under. Changing it would leave
   /// every stored record unreachable.

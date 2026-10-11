@@ -120,7 +120,7 @@ Future<void> _takePages(_Device device, String size) async {
   // the day's page.
   await device.openApp();
   await device.tap('経過');
-  await device.waitForMention('準備中');
+  await device.waitForMention('期間');
   await take('review');
 
   await device.tap('診察');

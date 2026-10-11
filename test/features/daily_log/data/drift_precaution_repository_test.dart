@@ -564,4 +564,44 @@ void main() {
       expect(await listed(inUse: false), ['運動 refrain', '運動 keepUp']);
     });
   });
+
+  group('the marks of a period', () {
+    test('are given by day, for the days from its first to its last', () async {
+      final snack = await repository.addToRefrain('間食');
+      final walk = await repository.addToKeepUp('散歩');
+      final last = day.plusDays(2);
+      await repository.setPrecautionMarked(day, snack.id, marked: true);
+      await repository.setPrecautionMarked(day, walk.id, marked: true);
+      await repository.setPrecautionMarked(last, walk.id, marked: true);
+      // A day on each side of the period.
+      await repository.setPrecautionMarked(
+        day.previous,
+        snack.id,
+        marked: true,
+      );
+      await repository.setPrecautionMarked(last.next, snack.id, marked: true);
+
+      expect(await repository.watchMarksBetween(day, last).first, {
+        day: {snack.id, walk.id},
+        last: {walk.id},
+      });
+    });
+
+    test('are told of a mark made after they were first read', () async {
+      final snack = await repository.addToRefrain('間食');
+      final told = expectLater(
+        repository.watchMarksBetween(day, day),
+        emitsInOrder([
+          isEmpty,
+          {
+            day: {snack.id},
+          },
+        ]),
+      );
+      await Future<void>.delayed(Duration.zero);
+      await repository.setPrecautionMarked(day, snack.id, marked: true);
+
+      await told;
+    });
+  });
 }

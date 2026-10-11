@@ -97,7 +97,6 @@ void main() {
 
       expect(find.text('まだ診察を記録していません。「診察を足す」から記録できます'), findsOneWidget);
       expect(find.textContaining('見本'), findsNothing);
-      expect(find.textContaining('準備中'), findsNothing);
     });
 
     testWidgets('list the visits to come, nearest first, then under a line '

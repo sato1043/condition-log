@@ -34,6 +34,13 @@ class _FailingWrites implements DailyLogRepository {
 
   @override
   Future<void> setMemo(CalendarDay day, String? memo) async {}
+
+  // No test here reads a period.
+  @override
+  Stream<List<DailyLog>> watchLogsBetween(
+    CalendarDay first,
+    CalendarDay last,
+  ) => throw UnimplementedError();
 }
 
 /// Keeps one pain score. A load reads it, then waits for the test when
@@ -66,6 +73,13 @@ class _SlowReload implements DailyLogRepository {
 
   @override
   Future<void> setMemo(CalendarDay day, String? memo) async {}
+
+  // No test here reads a period.
+  @override
+  Stream<List<DailyLog>> watchLogsBetween(
+    CalendarDay first,
+    CalendarDay last,
+  ) => throw UnimplementedError();
 }
 
 void main() {

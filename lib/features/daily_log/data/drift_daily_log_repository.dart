@@ -16,17 +16,32 @@ class DriftDailyLogRepository implements DailyLogRepository {
     final row = await (_db.select(
       _db.dailyLogs,
     )..where((t) => t.day.equals(day.isoDate))).getSingleOrNull();
-    if (row == null) return DailyLog(day: day);
-    return DailyLog(
-      day: day,
-      scores: {
-        for (final condition in Condition.values)
-          if (_valueOf(row, condition) case final value?)
-            condition: Score(value),
-      },
-      memo: row.memo,
-    );
+    return row == null ? DailyLog(day: day) : _logOf(day, row);
   }
+
+  @override
+  Stream<List<DailyLog>> watchLogsBetween(CalendarDay first, CalendarDay last) {
+    // Days are YYYY-MM-DD, so comparing the text compares the dates.
+    return (_db.select(_db.dailyLogs)
+          ..where((t) => t.day.isBetweenValues(first.isoDate, last.isoDate))
+          ..orderBy([(t) => OrderingTerm.asc(t.day)]))
+        .watch()
+        .map(
+          (rows) => [
+            for (final row in rows)
+              _logOf(CalendarDay.fromIsoDate(row.day), row),
+          ],
+        );
+  }
+
+  static DailyLog _logOf(CalendarDay day, DailyLogRow row) => DailyLog(
+    day: day,
+    scores: {
+      for (final condition in Condition.values)
+        if (_valueOf(row, condition) case final value?) condition: Score(value),
+    },
+    memo: row.memo,
+  );
 
   @override
   Future<void> setScore(CalendarDay day, Condition condition, Score? score) {

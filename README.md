@@ -12,10 +12,12 @@
 - 診察の記録: 診察前に聞くことと診察で聞いたことを 1 回の診察ごとに残し、次の診察の
   予定も書いておけます。受診先（病院・診療科・医師）を登録して選び、受診先ごとに
   見返せます
+- 体調の推移の振り返り: 期間と項目を選び、1 日 1 行の一覧で推移を見られます。気を付ける
+  ことができた日とメモのある日が行で分かり、前回の診察からの経過を診察日で区切って
+  読めます
 
 予定している機能:
 
-- 体調の推移の振り返り（気を付けることができた日の印を重ねて表示）
 - アプリのロック、記録の書き出しと別の端末への読み込み
 
 正本は [要求一覧](docs/requirements.md)「提供要求」です。
@@ -31,7 +33,7 @@
 | 体調（同じページの終わり） | <img src="docs/images/screens/daily-log-end-default.png" width="240" alt="体調のページの終わり。気を付けることの印と足す欄、メモ（既定の文字）"> | <img src="docs/images/screens/daily-log-end-largest.png" width="240" alt="体調のページの終わり。気を付けることの印と足す欄、メモ（最大の文字）"> |
 | 気を付けることの編集 | <img src="docs/images/screens/precautions-default.png" width="240" alt="気を付けることの編集（既定の文字）"> | <img src="docs/images/screens/precautions-largest.png" width="240" alt="気を付けることの編集（最大の文字）"> |
 | 設定 | <img src="docs/images/screens/settings-default.png" width="240" alt="設定（既定の文字）"> | <img src="docs/images/screens/settings-largest.png" width="240" alt="設定（最大の文字）"> |
-| 経過（準備中の表示） | <img src="docs/images/screens/review-default.png" width="240" alt="経過のページ（既定の文字）"> | <img src="docs/images/screens/review-largest.png" width="240" alt="経過のページ（最大の文字）"> |
+| 経過（前回の診察からの一覧） | <img src="docs/images/screens/review-default.png" width="240" alt="経過のページ（既定の文字）"> | <img src="docs/images/screens/review-largest.png" width="240" alt="経過のページ（最大の文字）"> |
 | 診察の一覧 | <img src="docs/images/screens/visits-default.png" width="240" alt="診察の一覧（既定の文字）"> | <img src="docs/images/screens/visits-largest.png" width="240" alt="診察の一覧（最大の文字）"> |
 | 1 回の診察 | <img src="docs/images/screens/visit-default.png" width="240" alt="1 回の診察のページ（既定の文字）"> | <img src="docs/images/screens/visit-largest.png" width="240" alt="1 回の診察のページ（最大の文字）"> |
 | 受診先 | <img src="docs/images/screens/care-providers-default.png" width="240" alt="受診先（既定の文字）"> | <img src="docs/images/screens/care-providers-largest.png" width="240" alt="受診先（最大の文字）"> |

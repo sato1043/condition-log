@@ -580,11 +580,83 @@ abstract class AppLocalizations {
   /// **'経過'**
   String get reviewTitle;
 
-  /// 中身をまだ作っていない、経過の画面が何の画面かと、準備中であることを示す 1 文
+  /// 経過の画面で、一覧に出す期間を選ぶ欄の名前。欄の枠の上と、選ぶダイアログの題名に出す
   ///
   /// In ja, this message translates to:
-  /// **'体調の経過を見る画面です。いまは準備中です。'**
-  String get reviewPending;
+  /// **'期間'**
+  String get trendPeriod;
+
+  /// 期間の選択肢。今日より前の最も新しい診察日から今日まで
+  ///
+  /// In ja, this message translates to:
+  /// **'前回の診察から'**
+  String get trendPeriodSinceLastVisit;
+
+  /// 期間の選択肢。今日を含む 7 日
+  ///
+  /// In ja, this message translates to:
+  /// **'1週間'**
+  String get trendPeriodOneWeek;
+
+  /// 期間の選択肢。今日を含む 14 日。今日より前に診察が無いときの既定
+  ///
+  /// In ja, this message translates to:
+  /// **'2週間'**
+  String get trendPeriodTwoWeeks;
+
+  /// 期間の選択肢。今日を含む 28 日
+  ///
+  /// In ja, this message translates to:
+  /// **'4週間'**
+  String get trendPeriodFourWeeks;
+
+  /// 経過の画面で、一覧に段を出す項目（全体の体調と 5 項目）を選ぶ欄の名前。欄の枠の上と、選ぶダイアログの題名に出す
+  ///
+  /// In ja, this message translates to:
+  /// **'項目'**
+  String get trendCondition;
+
+  /// 経過の一覧の 1 行の日付。枠と同じ段に収めるため、見出しの日付（dayHeading）より短くする。weekday は dayHeading と同じ
+  ///
+  /// In ja, this message translates to:
+  /// **'{month}/{day}（{weekday, select, 1{月} 2{火} 3{水} 4{木} 5{金} 6{土} 7{日} other{}}）'**
+  String trendRowDay(int month, int day, String weekday);
+
+  /// 経過の一覧で、選んだ項目の段が無い日に、段の枠の場所へ出す語。その日にほかの項目・メモ・気を付けることの印が在っても出す
+  ///
+  /// In ja, this message translates to:
+  /// **'未記録'**
+  String get trendNotRecorded;
+
+  /// 経過の一覧で、メモのある日の印の読み上げ。本文は読まない
+  ///
+  /// In ja, this message translates to:
+  /// **'メモあり'**
+  String get trendHasMemo;
+
+  /// 経過の一覧の行に出す、その日にできた気を付けること。name は項目の名前、done は印のラベル（控えた・続けた）
+  ///
+  /// In ja, this message translates to:
+  /// **'{name} {done}'**
+  String trendManaged(String name, String done);
+
+  /// 経過の一覧の行で、並べて出すものの区切り。読み上げの部分どうし（日付・添え書き・段・気を付けること・メモ）と、行に出す気を付けることどうしを区切る
+  ///
+  /// In ja, this message translates to:
+  /// **'、'**
+  String get trendSeparator;
+
+  /// 経過の一覧で、診察のある日の行の上に挟む区切り。day は見出しの日付（dayHeading）
+  ///
+  /// In ja, this message translates to:
+  /// **'診察 {day}'**
+  String trendVisitDay(String day);
+
+  /// 診察日の区切りの読み上げ
+  ///
+  /// In ja, this message translates to:
+  /// **'診察日、{day}'**
+  String trendVisitDayLabel(String day);
 
   /// 診察 1 件のページの題名
   ///

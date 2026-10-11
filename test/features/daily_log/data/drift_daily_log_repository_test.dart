@@ -159,4 +159,47 @@ void main() {
       expect((await repository.logOf(day)).memo, ' line 1\nline 2 ');
     });
   });
+
+  group('a period', () {
+    final first = CalendarDay(2026, 9, 28);
+    final last = CalendarDay(2026, 10, 4);
+    final within = CalendarDay(2026, 9, 30);
+
+    test('holds the days written from its first to its last, in order, '
+        'each with its record', () async {
+      // Written out of order, with a day on each side of the period.
+      await repository.setScore(last, Condition.overall, Score(3));
+      await repository.setScore(first.previous, Condition.overall, Score(1));
+      await repository.setMemo(first, 'first day');
+      await repository.setScore(last.next, Condition.overall, Score(5));
+      await repository.setScore(within, Condition.pain, Score(2));
+
+      final logs = await repository.watchLogsBetween(first, last).first;
+
+      expect([for (final log in logs) log.day], [first, within, last]);
+      expect(logs[0].memo, 'first day');
+      expect(logs[0].scores, isEmpty);
+      expect(logs[1].scores, {Condition.pain: Score(2)});
+      expect(logs[2].scores, {Condition.overall: Score(3)});
+    });
+
+    test('is told of a record made after it was first read', () async {
+      final told = expectLater(
+        repository
+            .watchLogsBetween(first, last)
+            .map((logs) => [for (final log in logs) log.scores]),
+        emitsInOrder([
+          isEmpty,
+          [
+            {Condition.overall: Score(4)},
+          ],
+        ]),
+      );
+      // A step chosen on another page after the period was first read.
+      await Future<void>.delayed(Duration.zero);
+      await repository.setScore(last, Condition.overall, Score(4));
+
+      await told;
+    });
+  });
 }

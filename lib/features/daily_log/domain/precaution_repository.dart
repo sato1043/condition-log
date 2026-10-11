@@ -81,6 +81,13 @@ abstract interface class PrecautionRepository {
   /// Ids of the precautions marked on [day].
   Future<Set<int>> markedPrecautions(CalendarDay day);
 
+  /// The ids of the precautions marked on each day from [first] to [last],
+  /// both included, for the days that hold a mark; again after each change.
+  Stream<Map<CalendarDay, Set<int>>> watchMarksBetween(
+    CalendarDay first,
+    CalendarDay last,
+  );
+
   /// A mark of a precaution never registered is an error of the storage.
   Future<void> setPrecautionMarked(
     CalendarDay day,

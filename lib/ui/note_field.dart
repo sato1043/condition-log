@@ -49,15 +49,35 @@ class _NoteFieldState extends State<NoteField> {
 
   /// The text last saved, or being saved: a second save of the same text is
   /// not started while the first is on its way.
-  late String _saved = widget.initialText;
+  ///
+  /// Set as the field is made, not when first read: the stored text may have
+  /// changed by then, and the text shown would be saved over it.
+  late String _saved;
+
+  /// The saves on their way. While there is one, a stored text that arrives
+  /// is this field's own, or is about to be replaced by it.
+  var _saving = 0;
 
   @override
   void initState() {
     super.initState();
+    _saved = widget.initialText;
     _focusNode.addListener(() {
       if (!_focusNode.hasFocus) _flush();
     });
     _lifecycle = AppLifecycleListener(onInactive: _flush, onHide: _flush);
+  }
+
+  /// Takes the stored text when it was changed elsewhere: the same note can
+  /// be shown, and written, on another page. Text typed here and not yet
+  /// saved is kept, and replaces the stored text at the next save.
+  @override
+  void didUpdateWidget(NoteField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialText == oldWidget.initialText) return;
+    if (_saving > 0 || _controller.text != _saved) return;
+    _saved = widget.initialText;
+    _controller.text = widget.initialText;
   }
 
   void _onChanged(String _) {
@@ -75,7 +95,11 @@ class _NoteFieldState extends State<NoteField> {
     // Read now: the save may end after this field has gone away.
     final onSaveFailed = widget.onSaveFailed;
     final onSaveLost = widget.onSaveLost;
-    widget.onSave(text).catchError((Object error, StackTrace stack) {
+    _saving++;
+    widget.onSave(text).whenComplete(() => _saving--).catchError((
+      Object error,
+      StackTrace stack,
+    ) {
       if (!mounted) return onSaveLost(error, stack);
       // Unless newer text has been saved since, the next moment saves again.
       if (_saved == text) _saved = before;

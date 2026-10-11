@@ -224,6 +224,26 @@ class DriftPrecautionRepository implements PrecautionRepository {
   }
 
   @override
+  Stream<Map<CalendarDay, Set<int>>> watchMarksBetween(
+    CalendarDay first,
+    CalendarDay last,
+  ) {
+    // Days are YYYY-MM-DD, so comparing the text compares the dates.
+    return (_db.select(_db.precautionMarks)
+          ..where((t) => t.day.isBetweenValues(first.isoDate, last.isoDate)))
+        .watch()
+        .map((rows) {
+          final marks = <CalendarDay, Set<int>>{};
+          for (final row in rows) {
+            (marks[CalendarDay.fromIsoDate(row.day)] ??= {}).add(
+              row.precautionId,
+            );
+          }
+          return marks;
+        });
+  }
+
+  @override
   Future<void> setPrecautionMarked(
     CalendarDay day,
     int precautionId, {

@@ -35,11 +35,16 @@ void main() {
   Future<void> expectPageLargeEnough(WidgetTester tester) async {
     await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
     final lists = find.byType(Scrollable);
+    // Toward the far end of the list: the trend's is laid out from its foot
+    // and opens there, so its far end is its top.
+    final fromFoot =
+        tester.state<ScrollableState>(lists.first).axisDirection ==
+        AxisDirection.up;
     // Twice: one drag crosses the whole page within a frame, and a part
     // first drawn while it loads grows after the drag stopped at what was
     // the end then.
     for (var drags = 0; drags < 2; drags++) {
-      await tester.drag(lists.first, const Offset(0, -3000));
+      await tester.drag(lists.first, Offset(0, fromFoot ? 3000 : -3000));
       await tester.pumpAndSettle();
     }
     // The second check reads the bottom: every list has reached its end,

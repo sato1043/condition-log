@@ -62,7 +62,8 @@ vocabulary:
 - 由来: `M1`
 - 及ぶ次元: 色
 
-毎日の記録は淡い地に濃い色の文字で示す。目を引く鮮やかな色を地に使わない。
+毎日の記録は淡い地に濃い色の文字で示す。目を引く鮮やかな色を地に使わない。経過は毎日の
+記録を日ごとに並べた別の見方なので、同じ地に置く。
 
 ### R2 コントラストの目安を WCAG AA に置く
 
@@ -304,6 +305,9 @@ WCAG 2.1 の相対輝度の式）。
 | V92 | `partDailyLogNavigationShown` | 毎日の記録 | 開いている行き先の塗り（選んだ段 V64 と同じ） | `V26`（`secondary`） | 面（V77）に 4.43:1 | 既定の `secondaryContainer` は面に 1.60:1 で、非テキストの下限を割る | `R2`, `R5`, `R7` | `color:dk8` | <span style="display:inline-block;width:2.5em;height:1em;background:#695B18;border:1px solid #8888"></span> |
 | V93 | `partDailyLogNavigationShownIcon` | 毎日の記録 | 開いている行き先のアイコン | `V27`（`onSecondary`） | `secondary` に 6.75:1 | 塗りを V92 にしたので、既定の `onSecondaryContainer` は塗りに 1.90:1 で読めない | `R2`, `R7` | `color:W` | <span style="display:inline-block;width:2.5em;height:1em;background:#FFFFFF;border:1px solid #8888"></span> |
 | V101 | `partDailyLogChosenRow` | 毎日の記録 | 選択肢のダイアログで選んだ行の文字（印で見分ける） | `V4`（`onSurface`） | ダイアログ（V78）に 6.87:1。フォーカスの重ねの後も 5.33:1 | 既定の `primary` は、物理キーボードのフォーカスの重ね（後述）を載せたダイアログの上で 4.07:1 となり、本文の下限を割る | `R2`, `R7` | `color:dkg14` | <span style="display:inline-block;width:2.5em;height:1em;background:#253532;border:1px solid #8888"></span> |
+| V102 | `partTrendStepRecorded` | 経過 | 一覧の行の、記録のある段の枠（塗る。段は枠の位置で示す） | `V4`（`onSurface`） | 地（V3）に 10.27:1 | 枠は自作の部品で、Material の既定を持たない | `R2`, `R7` | `color:dkg14` | <span style="display:inline-block;width:2.5em;height:1em;background:#253532;border:1px solid #8888"></span> |
+| V103 | `partTrendStepEmpty` | 経過 | 一覧の行の、記録の無い段の枠（2 dp の線） | `V51`（`outlineVariant`） | 地（V3）に 4.50:1 | 枠は自作の部品で、Material の既定を持たない | `R5`, `R7` | `color:s14` | <span style="display:inline-block;width:2.5em;height:1em;background:#297364;border:1px solid #8888"></span> |
+| V104 | `partTrendRowMark` | 経過 | 一覧の行の、メモの印と行を開ける印（山形） | `V4`（`onSurface`） | 地（V3）に 10.27:1 | 部品の中でなく単独で置くアイコンの既定は、配色の役割でない黒（不透明度 87%）で、定めた色の外になる | `R2`, `R7` | `color:dkg14` | <span style="display:inline-block;width:2.5em;height:1em;background:#253532;border:1px solid #8888"></span> |
 
 表に無い部品が既定の当て方で取る色を、置く面の上で測った（2026-10-09。チップは
 2026-10-10。material_ui 1.5.0 の既定）。
@@ -441,16 +445,16 @@ OS の設定の大きさで読める（自動テストで確かめた。実機�
 ## この記述が覆わない範囲
 
 **最終検分 2026-10-11。** 下の全項について、理由が今も成り立つかを見た。面の役割の項から
-`shadow` を外し、影を描く部品と、その色を Material の既定が補うことを書いた。ほかの項は
-変えていない。
+`shadow` を外し、影を描く部品と、その色を Material の既定が補うことを書いた。地の色の項と
+面の役割の項から経過を外した（経過の地を R1 へ入れた。TASK0006）。ほかの項は変えて
+いない。
 
 覆わない見えは次のとおり。
 
-- **経過・診察の画面の地の色**。基調を定めてあるのは毎日の
-  記録の画面だけで、残りの画面へ R1 を広げる根拠がまだ無い。
-  中身の無い経過の画面（TASK0013）と、診察の一覧と診察の
-  ページ（TASK0014）は、毎日の記録の画面の役割で描いている。診察の画面は毎日の記録と
-  同じ入力の画面なので、R1 を広げないと裁定された（TASK0014）
+- **診察の画面の地の色**。基調を定めてあるのは毎日の記録と経過の画面で（R1）、診察の
+  画面へ R1 を広げる根拠がまだ無い。診察の一覧と診察のページ（TASK0014）は、毎日の
+  記録の画面の役割で描いている。診察の画面は毎日の記録と同じ入力の画面なので、R1 を
+  広げないと裁定された（TASK0014）
 - **余白・角の丸み・影・動き・書体（字形）・アイコン・フォーカスの表示**。
   形は触れる大きさ（R8）と、入力欄の名前と補足の置き方（V89・V90）と欄の上の空き
   （V99）と、下端のナビゲーションの高さとアイコンの大きさ（V95・V98）にしか及んで
@@ -460,14 +464,14 @@ OS の設定の大きさで読める（自動テストで確かめた。実機�
 - **配色の面積比**。V11 は色の役割だけを定める。引き当てた配色（`samples.md` の 77）は
   面積比を持つが、画面の面積の配分を決める材料がまだ無い
 - **毎日の記録の画面に無い面の役割**（`surfaceContainerLowest`・`Highest`・
-  `surfaceDim`・`surfaceBright`・`inverseSurface`・`scrim`）と、経過などの
+  `surfaceDim`・`surfaceBright`・`inverseSurface`・`scrim`）と、診察の
   画面の役割。毎日の記録の画面の部品は面を 3 段（`surfaceContainerLow`・
   `surfaceContainer`・`surfaceContainerHigh`）しか使わない。ただし通知（SnackBar）は
   `inverseSurface`・`onInverseSurface` で描き、宣言していないこの 2 つを Material の
   既定の補い（V4 と V3 を入れ替えた組）で埋めている。影を持つ部品（カード・行の
   メニュー・足す欄の候補の一覧）は影を `shadow` で描き、宣言していないこの役割を
   Material の既定の補い（黒）で埋めている（`material.dart`・`color_scheme.dart`。
-  2026-10-10）。経過などの画面は、面の色を決める地がまだ無い（上の 1 つ目の項）
+  2026-10-10）。診察の画面は、面の色を決める地がまだ無い（上の 1 つ目の項）
 - **ドラッグ中の状態の重ね**。R10 は押した・フォーカスした・ポインターを載せた状態だけを
   値にした。気を付けることの編集の画面は、ドラッグで並べ替える一覧を持つ（TASK0002）。
   ドラッグ中の行は Material の既定で描いている

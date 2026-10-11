@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:condition_log/app/app_frame.dart';
 import 'package:condition_log/data/database.dart';
 import 'package:condition_log/features/daily_log/ui/daily_log_page.dart';
+import 'package:condition_log/features/trend_review/ui/trend_review_page.dart';
 import 'package:condition_log/features/visits/ui/visit_page.dart';
 
 import '../support/actions.dart';
@@ -75,7 +76,7 @@ void main() {
     await go(tester, '/review');
 
     expect(headerTitle('経過'), findsOneWidget);
-    expect(find.text('体調の経過を見る画面です。いまは準備中です。'), findsOneWidget);
+    expect(find.byType(TrendReviewPage), findsOneWidget);
     // A destination's first screen has nothing to go back to.
     expect(find.byType(BackButton), findsNothing);
   });

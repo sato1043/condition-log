@@ -4,8 +4,10 @@ import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:condition_log/data/database.dart';
+import 'package:condition_log/data/storage_exception.dart';
 import 'package:condition_log/domain/calendar_day.dart';
 import 'package:condition_log/features/daily_log/data/drift_precaution_repository.dart';
+import 'package:condition_log/features/daily_log/domain/precaution.dart';
 
 import '../../../support/actions.dart';
 import '../../../support/app.dart';
@@ -36,6 +38,21 @@ class _FailingInUse extends DriftPrecautionRepository {
   @override
   Future<void> setPrecautionInUse(int id, {required bool inUse}) async =>
       throw StateError('write failed');
+}
+
+/// Stores like the app, but the list cannot be read while [unreadable]. It
+/// fails as the app's stores do: with the type a read is by default tried
+/// again on.
+class _UnreadableList extends DriftPrecautionRepository {
+  _UnreadableList(super.db);
+
+  var unreadable = true;
+
+  @override
+  Future<List<Precaution>> precautionsInUse() async {
+    if (unreadable) throw StorageException('select', Exception('unreadable'));
+    return super.precautionsInUse();
+  }
 }
 
 void main() {
@@ -73,6 +90,30 @@ void main() {
     expect(find.textContaining('登録できます'), findsNothing);
     // No hint about marks while there is nothing to mark.
     expect(find.text('できた日に印を付けます'), findsNothing);
+  });
+
+  testWidgets('a list that cannot be read says so at once, and is read '
+      'again', (tester) async {
+    await stored.addToRefrain('間食');
+    final store = _UnreadableList(db);
+    // Tall enough to lay the list out without scrolling to it.
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(400, 4000);
+    addTearDown(tester.view.reset);
+
+    final opened = tester.binding.clock.now();
+    await pumpApp(tester, db: db, clock: clock, precautions: store);
+    expect(find.text('記録を読み込めませんでした'), findsOneWidget);
+    // Not after tries that leave the page saying nothing meanwhile.
+    expect(
+      tester.binding.clock.now().difference(opened),
+      lessThan(const Duration(seconds: 1)),
+    );
+
+    store.unreadable = false;
+    await press(tester, find.text('読み込み直す'));
+    expect(find.text('記録を読み込めませんでした'), findsNothing);
+    expect(find.text('間食'), findsOneWidget);
   });
 
   testWidgets('an item added in the editor can be marked on the day', (

@@ -74,6 +74,21 @@ void main() {
     expect(() => CalendarDay.fromIsoDate('2026-02-29'), throwsArgumentError);
   });
 
+  test('reads a text from outside the store as a day, or as none', () {
+    expect(CalendarDay.tryFromIsoDate('2028-02-29'), CalendarDay(2028, 2, 29));
+    for (final text in [
+      '2026-3-09', // no padding
+      '2026/03/09',
+      '2026-03-09 ', // trailing space
+      '２０２６-03-09', // full-width digits
+      '',
+      '2026-02-29', // the form of a date, but no such date
+      '2026-13-01',
+    ]) {
+      expect(CalendarDay.tryFromIsoDate(text), isNull, reason: '"$text"');
+    }
+  });
+
   test('leaves the stored day out of what it throws', () {
     // What is thrown reaches the device log, and a day can tell of a visit.
     for (final text in ['2026/03/09', '2026-02-29']) {
@@ -96,6 +111,14 @@ void main() {
   test('steps across month and year boundaries', () {
     expect(CalendarDay(2026, 12, 31).next, CalendarDay(2027, 1, 1));
     expect(CalendarDay(2026, 3, 1).previous, CalendarDay(2026, 2, 28));
+  });
+
+  test('counts days across month, year and leap-day boundaries', () {
+    expect(CalendarDay(2026, 3, 1).plusDays(-1), CalendarDay(2026, 2, 28));
+    expect(CalendarDay(2028, 2, 28).plusDays(2), CalendarDay(2028, 3, 1));
+    expect(CalendarDay(2026, 12, 25).plusDays(7), CalendarDay(2027, 1, 1));
+    expect(CalendarDay(2026, 10, 4).plusDays(-27), CalendarDay(2026, 9, 7));
+    expect(CalendarDay(2026, 10, 4).plusDays(0), CalendarDay(2026, 10, 4));
   });
 
   test('orders days', () {

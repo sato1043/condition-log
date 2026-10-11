@@ -282,7 +282,61 @@ class AppLocalizationsJa extends AppLocalizations {
   String get reviewTitle => '経過';
 
   @override
-  String get reviewPending => '体調の経過を見る画面です。いまは準備中です。';
+  String get trendPeriod => '期間';
+
+  @override
+  String get trendPeriodSinceLastVisit => '前回の診察から';
+
+  @override
+  String get trendPeriodOneWeek => '1週間';
+
+  @override
+  String get trendPeriodTwoWeeks => '2週間';
+
+  @override
+  String get trendPeriodFourWeeks => '4週間';
+
+  @override
+  String get trendCondition => '項目';
+
+  @override
+  String trendRowDay(int month, int day, String weekday) {
+    String _temp0 = intl.Intl.selectLogic(weekday, {
+      '1': '月',
+      '2': '火',
+      '3': '水',
+      '4': '木',
+      '5': '金',
+      '6': '土',
+      '7': '日',
+      'other': '',
+    });
+    return '$month/$day（$_temp0）';
+  }
+
+  @override
+  String get trendNotRecorded => '未記録';
+
+  @override
+  String get trendHasMemo => 'メモあり';
+
+  @override
+  String trendManaged(String name, String done) {
+    return '$name $done';
+  }
+
+  @override
+  String get trendSeparator => '、';
+
+  @override
+  String trendVisitDay(String day) {
+    return '診察 $day';
+  }
+
+  @override
+  String trendVisitDayLabel(String day) {
+    return '診察日、$day';
+  }
 
   @override
   String get visitsTitle => '診察';

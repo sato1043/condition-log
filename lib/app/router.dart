@@ -5,6 +5,7 @@ import '../features/daily_log/ui/daily_log_page.dart';
 import '../features/daily_log/ui/precautions_page.dart';
 import '../features/settings/first_launch_about.dart';
 import '../features/settings/settings_page.dart';
+import '../features/trend_review/ui/trend_day_page.dart';
 import '../features/trend_review/ui/trend_review_page.dart';
 import '../features/visits/ui/care_providers_page.dart';
 import '../features/visits/ui/visit_page.dart';
@@ -88,6 +89,19 @@ GoRoute _screensOf(Destination destination) => switch (destination) {
   Destination.review => GoRoute(
     path: TrendReviewPage.path,
     builder: (context, state) => const TrendReviewPage(),
+    routes: [
+      GoRoute(
+        path: TrendDayPage.path,
+        // A location that names no day leads to the list the days are
+        // opened from.
+        redirect: (context, state) =>
+            TrendDayPage.dayAt(state) == null ? TrendReviewPage.path : null,
+        // Built only for a location the redirect let through: one that
+        // names a day.
+        builder: (context, state) =>
+            TrendDayPage(day: TrendDayPage.dayAt(state)!),
+      ),
+    ],
   ),
   Destination.visits => GoRoute(
     path: VisitsPage.path,

@@ -286,9 +286,72 @@
   "@reviewTitle": {
     "description": "体調の経過を見る画面の題名"
   },
-  "reviewPending": "体調の経過を見る画面です。いまは準備中です。",
-  "@reviewPending": {
-    "description": "中身をまだ作っていない、経過の画面が何の画面かと、準備中であることを示す 1 文"
+  "trendPeriod": "期間",
+  "@trendPeriod": {
+    "description": "経過の画面で、一覧に出す期間を選ぶ欄の名前。欄の枠の上と、選ぶダイアログの題名に出す"
+  },
+  "trendPeriodSinceLastVisit": "前回の診察から",
+  "@trendPeriodSinceLastVisit": {
+    "description": "期間の選択肢。今日より前の最も新しい診察日から今日まで"
+  },
+  "trendPeriodOneWeek": "1週間",
+  "@trendPeriodOneWeek": {
+    "description": "期間の選択肢。今日を含む 7 日"
+  },
+  "trendPeriodTwoWeeks": "2週間",
+  "@trendPeriodTwoWeeks": {
+    "description": "期間の選択肢。今日を含む 14 日。今日より前に診察が無いときの既定"
+  },
+  "trendPeriodFourWeeks": "4週間",
+  "@trendPeriodFourWeeks": {
+    "description": "期間の選択肢。今日を含む 28 日"
+  },
+  "trendCondition": "項目",
+  "@trendCondition": {
+    "description": "経過の画面で、一覧に段を出す項目（全体の体調と 5 項目）を選ぶ欄の名前。欄の枠の上と、選ぶダイアログの題名に出す"
+  },
+  "trendRowDay": "{month}/{day}（{weekday, select, 1{月} 2{火} 3{水} 4{木} 5{金} 6{土} 7{日} other{}}）",
+  "@trendRowDay": {
+    "description": "経過の一覧の 1 行の日付。枠と同じ段に収めるため、見出しの日付（dayHeading）より短くする。weekday は dayHeading と同じ",
+    "placeholders": {
+      "month": {"type": "int"},
+      "day": {"type": "int"},
+      "weekday": {"type": "String"}
+    }
+  },
+  "trendNotRecorded": "未記録",
+  "@trendNotRecorded": {
+    "description": "経過の一覧で、選んだ項目の段が無い日に、段の枠の場所へ出す語。その日にほかの項目・メモ・気を付けることの印が在っても出す"
+  },
+  "trendHasMemo": "メモあり",
+  "@trendHasMemo": {
+    "description": "経過の一覧で、メモのある日の印の読み上げ。本文は読まない"
+  },
+  "trendManaged": "{name} {done}",
+  "@trendManaged": {
+    "description": "経過の一覧の行に出す、その日にできた気を付けること。name は項目の名前、done は印のラベル（控えた・続けた）",
+    "placeholders": {
+      "name": {"type": "String"},
+      "done": {"type": "String"}
+    }
+  },
+  "trendSeparator": "、",
+  "@trendSeparator": {
+    "description": "経過の一覧の行で、並べて出すものの区切り。読み上げの部分どうし（日付・添え書き・段・気を付けること・メモ）と、行に出す気を付けることどうしを区切る"
+  },
+  "trendVisitDay": "診察 {day}",
+  "@trendVisitDay": {
+    "description": "経過の一覧で、診察のある日の行の上に挟む区切り。day は見出しの日付（dayHeading）",
+    "placeholders": {
+      "day": {"type": "String"}
+    }
+  },
+  "trendVisitDayLabel": "診察日、{day}",
+  "@trendVisitDayLabel": {
+    "description": "診察日の区切りの読み上げ",
+    "placeholders": {
+      "day": {"type": "String"}
+    }
   },
   "visitsTitle": "診察",
   "@visitsTitle": {
