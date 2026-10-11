@@ -13,12 +13,16 @@ import '../domain/precaution.dart';
 class PrecautionNameField extends StatelessWidget {
   const PrecautionNameField({
     super.key,
+    required this.label,
     required this.controller,
     this.focusNode,
     required this.manner,
     required this.turnedDown,
   });
 
+  /// The field's name on its frame: what the field is for where it stands,
+  /// a new item where one is added and the name where one is revised.
+  final String label;
   final TextEditingController controller;
   final FocusNode? focusNode;
   final PrecautionManner manner;
@@ -42,7 +46,7 @@ class PrecautionNameField extends StatelessWidget {
             // keyboard not to learn it.
             enableIMEPersonalizedLearning: false,
             style: Theme.of(context).textTheme.bodyLarge,
-            decoration: fieldDecoration(l10n.precautionName).copyWith(
+            decoration: fieldDecoration(label).copyWith(
               errorText: turnedDown != null && turnedDown == held
                   ? l10n.precautionTurnedDown
                   : null,

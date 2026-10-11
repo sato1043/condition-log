@@ -63,13 +63,14 @@ void main() {
     for (final item in await stored.precautionsInUse()) item.name,
   ];
 
-  testWidgets('tells how to register when nothing is registered', (
-    tester,
-  ) async {
+  testWidgets('says so when nothing is registered, without telling how to '
+      'register', (tester) async {
     await pumpApp(tester, db: db, clock: clock);
-    await scrollTo(tester, find.text('まだ登録していません。「編集」から登録できます'));
+    await scrollTo(tester, find.text('まだ登録していません'));
 
-    expect(find.text('まだ登録していません。「編集」から登録できます'), findsOneWidget);
+    expect(find.text('まだ登録していません'), findsOneWidget);
+    // The add field is right below, so no way to register is pointed at.
+    expect(find.textContaining('登録できます'), findsNothing);
     // No hint about marks while there is nothing to mark.
     expect(find.text('できた日に印を付けます'), findsNothing);
   });
@@ -307,7 +308,7 @@ void main() {
     await goBack(tester);
 
     // The day's page is back, with nothing left on its list.
-    expect(find.text('まだ登録していません。「編集」から登録できます'), findsOneWidget);
+    expect(find.text('まだ登録していません'), findsOneWidget);
     expect(precautionMark('間食', '控えた'), findsNothing);
     expect(await stored.markedPrecautions(today.previous), {snack.id});
   });

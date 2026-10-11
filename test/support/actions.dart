@@ -69,8 +69,8 @@ Future<void> backGesture(WidgetTester tester) async {
 
 /// Opens the precaution editor from the daily log page.
 Future<void> openEditor(WidgetTester tester) async {
-  await scrollTo(tester, find.text('編集'));
-  await tester.tap(find.text('編集'));
+  await scrollTo(tester, find.text('一覧'));
+  await tester.tap(find.text('一覧'));
   await tester.pumpAndSettle();
 }
 

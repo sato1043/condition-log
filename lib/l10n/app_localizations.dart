@@ -346,16 +346,16 @@ abstract class AppLocalizations {
   /// **'{name}、{done}'**
   String precautionMarkLabel(String name, String done);
 
-  /// 気を付けることの編集の画面を開くボタン
+  /// 気を付けることの編集の画面を開くボタン。体調のページの足す欄の「追加」の左に置く。開いた先で項目を直す・並べ替えるので、行き先（一覧）を名前にする
   ///
   /// In ja, this message translates to:
-  /// **'編集'**
-  String get editPrecautions;
+  /// **'一覧'**
+  String get openPrecautionList;
 
-  /// No description provided for @noPrecautionsYet.
+  /// 気を付けることを 1 つも登録していないとき、体調のページの見出しの下に出す文。足す欄がすぐ下に在るので、登録の仕方は案内しない
   ///
   /// In ja, this message translates to:
-  /// **'まだ登録していません。「編集」から登録できます'**
+  /// **'まだ登録していません'**
   String get noPrecautionsYet;
 
   /// No description provided for @precautionsTitle.
@@ -364,13 +364,19 @@ abstract class AppLocalizations {
   /// **'気を付けること'**
   String get precautionsTitle;
 
-  /// No description provided for @precautionName.
+  /// 気を付けることを足す欄の、名前の欄の枠の上の名前。体調のページでは一覧のすぐ下に出るので、何を打つ欄かを欄の役割で言う
+  ///
+  /// In ja, this message translates to:
+  /// **'新しい項目'**
+  String get newPrecaution;
+
+  /// 項目を直すダイアログの、名前の欄の枠の上の名前
   ///
   /// In ja, this message translates to:
   /// **'名前'**
   String get precautionName;
 
-  /// 気を付け方（控える・続ける）を選ぶボタンの名前
+  /// 気を付け方（控える・続ける）を選ぶボタンの組の読み上げの名前。画面には出さない
   ///
   /// In ja, this message translates to:
   /// **'気を付け方'**

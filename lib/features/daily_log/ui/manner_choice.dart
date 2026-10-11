@@ -5,7 +5,8 @@ import '../domain/precaution.dart';
 import 'precaution_words.dart';
 
 /// Chooses the manner of a precaution with one press: both manners stay in
-/// sight, named once before them.
+/// sight, under the name of the item they belong to. What they choose is
+/// named to screen readers alone.
 class MannerChoice extends StatelessWidget {
   const MannerChoice({
     super.key,
@@ -19,26 +20,19 @@ class MannerChoice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    // The name goes above the buttons rather than beside them where there
-    // is room: laid out in a Wrap, Material's segmented button throws in a
-    // dialog, which measures its content before laying it out
-    // (material_ui 1.5.0 reads its constraints while it is measured).
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // A node of its own, read just before the two: on a card it would
-        // otherwise be read with the card's other text, away from them.
-        Semantics(
-          container: true,
-          child: Text(
-            l10n.precautionManner,
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-        ),
-        const SizedBox(height: 4),
+    // As wide as the two need, where the page or the dialog would stretch
+    // them, and at the line's end: what is pressed about a precaution is
+    // down that side, on the day's page, in the editor and in the dialog.
+    return Align(
+      alignment: AlignmentDirectional.centerEnd,
+      // A node of its own that holds the two, so the name is read just
+      // before them: on a card it would otherwise be read with the card's
+      // other text, away from them.
+      child: Semantics(
+        container: true,
+        label: l10n.precautionManner,
         // The shape and the colors are Material's own (R7).
-        SegmentedButton<PrecautionManner>(
+        child: SegmentedButton<PrecautionManner>(
           segments: [
             for (final each in PrecautionManner.values)
               ButtonSegment(
@@ -57,7 +51,7 @@ class MannerChoice extends StatelessWidget {
           selected: {manner},
           onSelectionChanged: (chosen) => onChanged(chosen.single),
         ),
-      ],
+      ),
     );
   }
 }

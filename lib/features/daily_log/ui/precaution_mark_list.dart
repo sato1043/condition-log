@@ -34,30 +34,16 @@ class PrecautionMarkList extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(
-              // A node of its own, so the hint below is not read or framed
-              // as part of the heading.
-              child: Semantics(
-                container: true,
-                header: true,
-                // VoiceOver reads a header only with a level; the date is
-                // level 1.
-                headingLevel: 2,
-                child: Text(l10n.precautions, style: textTheme.titleMedium),
-              ),
-            ),
-            // A frame and a pencil tell it is a button. Its words take
-            // Material's size for a button (R9).
-            OutlinedButton.icon(
-              // The day's list follows the edited list by itself.
-              onPressed: () => context.push('/${PrecautionsPage.path}'),
-              icon: const Icon(Icons.edit),
-              label: Text(l10n.editPrecautions),
-            ),
-          ],
+        // A node of its own, so the hint below is not read or framed as
+        // part of the heading.
+        Semantics(
+          container: true,
+          header: true,
+          // VoiceOver reads a header only with a level; the date is level 1.
+          headingLevel: 2,
+          child: Text(l10n.precautions, style: textTheme.titleMedium),
         ),
+        const SizedBox(height: 4),
         // A reload after an edit keeps the last list on screen until the new
         // one arrives, rather than blinking to a spinner.
         switch (precautions) {
@@ -84,7 +70,19 @@ class PrecautionMarkList extends ConsumerWidget {
               // less to do on a day the person is unwell. The name on the
               // frame needs the room above (V99).
               const SizedBox(height: fieldGap),
-              AddPrecaution(onFailed: onSaveFailed),
+              AddPrecaution(
+                onFailed: onSaveFailed,
+                // The list is opened from beside the button that adds, so
+                // what is done about the precautions is in one place. A
+                // frame and an icon tell it is a button; its words take
+                // Material's size for a button (R9).
+                beside: OutlinedButton.icon(
+                  // The day's list follows the edited list by itself.
+                  onPressed: () => context.push('/${PrecautionsPage.path}'),
+                  icon: const Icon(Icons.format_list_bulleted),
+                  label: Text(l10n.openPrecautionList),
+                ),
+              ),
             ],
           ),
           AsyncError(:final isLoading) => LoadFailure(

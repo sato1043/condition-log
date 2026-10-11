@@ -105,6 +105,7 @@ class _ReviseDialogState extends State<_ReviseDialog> {
           // leave no room for the manners below, with nothing to tell that
           // they are there.
           PrecautionNameField(
+            label: l10n.precautionName,
             controller: _name,
             manner: _manner,
             turnedDown: _turnedDown,

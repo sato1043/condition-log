@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../ui/field_decoration.dart';
 import '../../../ui/load_failure.dart';
 import '../../../ui/save_failure.dart';
 import '../../../ui/spoken_status.dart';
@@ -90,28 +91,36 @@ class PrecautionsPage extends ConsumerWidget {
         // not drag.
         AsyncData(:final value) => ReorderableListView(
           padding: const EdgeInsets.all(16),
-          header: Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: AddPrecaution(onFailed: reportFailure),
-          ),
-          footer: value.notInUse.isEmpty
-              ? null
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 24),
-                    Text(l10n.notInUseHeading, style: textTheme.titleMedium),
-                    const SizedBox(height: 4),
-                    Text(l10n.notInUseHint, style: textTheme.bodyLarge),
-                    for (final item in value.notInUse)
-                      _PrecautionTile(
-                        item: item,
-                        actionLabel: l10n.takeIntoUse,
-                        onAction: () => setInUse(item, inUse: true),
-                        onRevise: () => revise(item),
-                      ),
-                  ],
+          footer: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Under the items in use, where an added item goes: it shows
+              // up right above the field, as one more put on the list. The
+              // name on the frame needs the room above (V99). The room is
+              // padding, not a part before the field: the field keeps its
+              // place among the parts, and what is typed, when the first
+              // item arrives.
+              Padding(
+                padding: EdgeInsets.only(
+                  top: value.inUse.isEmpty ? 0 : fieldGap,
                 ),
+                child: AddPrecaution(onFailed: reportFailure),
+              ),
+              if (value.notInUse.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                Text(l10n.notInUseHeading, style: textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Text(l10n.notInUseHint, style: textTheme.bodyLarge),
+                for (final item in value.notInUse)
+                  _PrecautionTile(
+                    item: item,
+                    actionLabel: l10n.takeIntoUse,
+                    onAction: () => setInUse(item, inUse: true),
+                    onRevise: () => revise(item),
+                  ),
+              ],
+            ],
+          ),
           onReorderItem: move,
           children: [
             for (final (i, item) in value.inUse.indexed)

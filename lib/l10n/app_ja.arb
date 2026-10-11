@@ -160,16 +160,26 @@
       "done": {"type": "String"}
     }
   },
-  "editPrecautions": "編集",
-  "@editPrecautions": {
-    "description": "気を付けることの編集の画面を開くボタン"
+  "openPrecautionList": "一覧",
+  "@openPrecautionList": {
+    "description": "気を付けることの編集の画面を開くボタン。体調のページの足す欄の「追加」の左に置く。開いた先で項目を直す・並べ替えるので、行き先（一覧）を名前にする"
   },
-  "noPrecautionsYet": "まだ登録していません。「編集」から登録できます",
+  "noPrecautionsYet": "まだ登録していません",
+  "@noPrecautionsYet": {
+    "description": "気を付けることを 1 つも登録していないとき、体調のページの見出しの下に出す文。足す欄がすぐ下に在るので、登録の仕方は案内しない"
+  },
   "precautionsTitle": "気を付けること",
+  "newPrecaution": "新しい項目",
+  "@newPrecaution": {
+    "description": "気を付けることを足す欄の、名前の欄の枠の上の名前。体調のページでは一覧のすぐ下に出るので、何を打つ欄かを欄の役割で言う"
+  },
   "precautionName": "名前",
+  "@precautionName": {
+    "description": "項目を直すダイアログの、名前の欄の枠の上の名前"
+  },
   "precautionManner": "気を付け方",
   "@precautionManner": {
-    "description": "気を付け方（控える・続ける）を選ぶボタンの名前"
+    "description": "気を付け方（控える・続ける）を選ぶボタンの組の読み上げの名前。画面には出さない"
   },
   "mannerRefrain": "控える",
   "mannerKeepUp": "続ける",

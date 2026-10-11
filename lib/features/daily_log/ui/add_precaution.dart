@@ -19,9 +19,13 @@ import 'providers.dart';
 /// An add the list turns down, because an item in use has the name and the
 /// manner, is told under the name and keeps what was typed.
 class AddPrecaution extends ConsumerStatefulWidget {
-  const AddPrecaution({super.key, required this.onFailed});
+  const AddPrecaution({super.key, required this.onFailed, this.beside});
 
   final SaveFailureHandler onFailed;
+
+  /// Put before the button that adds, on its line: what a page offers
+  /// about the precautions besides adding one.
+  final Widget? beside;
 
   @override
   ConsumerState<AddPrecaution> createState() => _AddPrecautionState();
@@ -132,6 +136,7 @@ class _AddPrecautionState extends ConsumerState<AddPrecaution>
             // it is left unused: the offered items are chosen by a press.
             fieldViewBuilder: (context, controller, focusNode, _) =>
                 PrecautionNameField(
+                  label: l10n.newPrecaution,
                   controller: controller,
                   focusNode: focusNode,
                   manner: _manner,
@@ -147,15 +152,21 @@ class _AddPrecautionState extends ConsumerState<AddPrecaution>
           onChanged: (manner) => setState(() => _manner = manner),
         ),
         const SizedBox(height: 8),
-        Align(
-          alignment: AlignmentDirectional.centerEnd,
-          child: ListenableBuilder(
-            listenable: _name,
-            builder: (context, _) => FilledButton(
-              onPressed: nameOf(_name.text) == null || _adding ? null : _add,
-              child: Text(l10n.addPrecaution),
+        // At the line's end, the button that adds last. The two fit one
+        // line of a small phone at the largest text.
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          spacing: 8,
+          children: [
+            ?widget.beside,
+            ListenableBuilder(
+              listenable: _name,
+              builder: (context, _) => FilledButton(
+                onPressed: nameOf(_name.text) == null || _adding ? null : _add,
+                child: Text(l10n.addPrecaution),
+              ),
             ),
-          ),
+          ],
         ),
       ],
     );

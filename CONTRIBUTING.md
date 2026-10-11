@@ -178,11 +178,11 @@ flutter pub get --enforce-lockfile
 （影の高さ 4・高さの上限 200・行の余白 16・行をボタンとして読ませる節）を写している
 ので、新しい版の `autocomplete.dart` と読み比べる。欄の完了が選ぶ候補への印（強調）は
 写していない。欄の完了を使わないためである。
-`lib/features/daily_log/ui/manner_choice.dart` は、`SegmentedButton` が
-ダイアログの中の `Wrap` で落ちる（測るときに自分の制約を読む）のを避けて、名前をボタンの
-上に置いている。新しい版で直っていれば、置き方を見直せる。同じファイルは、選んだ側を
-VoiceOver へ伝えるのを、`SegmentedButton` が付ける選んだ状態（`selected`）に任せている
-ので、新しい版の `segmented_button.dart` がそれを付けることも読み比べる。
+`lib/features/daily_log/ui/manner_choice.dart` は、選んだ側を VoiceOver へ伝えるのを、
+`SegmentedButton` が付ける選んだ状態（`selected`）に任せているので、新しい版の
+`segmented_button.dart` がそれを付けることを読み比べる。`SegmentedButton` は、
+ダイアログの中の `Wrap` に置くと落ちる（測るときに自分の制約を読む）。いまは `Wrap` に
+置いていないが、ボタンの横へ部品を並べるときは、新しい版で直っているかを先に確かめる。
 
 `pubspec.lock` が固定しないものが 2 つある。
 

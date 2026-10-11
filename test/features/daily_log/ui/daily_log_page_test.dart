@@ -713,36 +713,39 @@ void main() {
     }, variant: TargetPlatformVariant.only(scale.key));
   }
 
-  testWidgets('the edit button of the precautions is framed, and reads on the '
-      'card', (tester) async {
+  testWidgets('the button to the list of the precautions is framed, and reads '
+      'on the card', (tester) async {
     await pumpApp(tester, db: db, clock: clock);
-    final edit = find.widgetWithText(OutlinedButton, '編集');
-    await scrollTo(tester, edit);
+    final list = find.widgetWithText(OutlinedButton, '一覧');
+    await scrollTo(tester, list);
 
-    // A frame and a pencil tell it is a button.
-    final pencil = find.descendant(of: edit, matching: find.byIcon(Icons.edit));
-    expect(pencil, findsOneWidget);
-    // The word and the pencil take one color, and read as body text on the
+    // A frame and an icon tell it is a button.
+    final icon = find.descendant(
+      of: list,
+      matching: find.byIcon(Icons.format_list_bulleted),
+    );
+    expect(icon, findsOneWidget);
+    // The word and the icon take one color, and read as body text on the
     // card (R2).
     Color? colorOf(Finder text) =>
         tester.renderObject<RenderParagraph>(text).text.style?.color;
     expect(
-      colorOf(find.text('編集')),
-      colorOf(find.descendant(of: pencil, matching: find.byType(RichText))),
+      colorOf(find.text('一覧')),
+      colorOf(find.descendant(of: icon, matching: find.byType(RichText))),
     );
     final card = tester
         .widget<Material>(
           find
               .descendant(
-                of: find.ancestor(of: edit, matching: find.byType(Card)),
+                of: find.ancestor(of: list, matching: find.byType(Card)),
                 matching: find.byType(Material),
               )
               .first,
         )
         .color!;
     for (final part in [
-      find.text('編集'),
-      find.descendant(of: pencil, matching: find.byType(RichText)),
+      find.text('一覧'),
+      find.descendant(of: icon, matching: find.byType(RichText)),
     ]) {
       expect(contrastRatio(colorOf(part)!, card), greaterThanOrEqualTo(4.5));
     }

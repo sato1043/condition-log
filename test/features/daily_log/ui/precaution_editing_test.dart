@@ -11,6 +11,7 @@ import 'package:condition_log/features/daily_log/data/drift_precaution_repositor
 import 'package:condition_log/features/daily_log/domain/precaution.dart';
 import 'package:condition_log/features/daily_log/domain/precaution_repository.dart';
 import 'package:condition_log/features/daily_log/ui/add_precaution.dart';
+import 'package:condition_log/ui/field_decoration.dart';
 
 import '../../../support/actions.dart';
 import '../../../support/app.dart';
@@ -85,6 +86,7 @@ void main() {
     find.text(manner),
   );
   final addButton = find.widgetWithText(FilledButton, '追加');
+  final listButton = find.widgetWithText(OutlinedButton, '一覧');
   final saveButton = find.widgetWithText(TextButton, '保存');
 
   PrecautionManner chosenIn(WidgetTester tester, Finder scope) => tester
@@ -93,6 +95,16 @@ void main() {
       )
       .selected
       .single;
+
+  /// The nearest node above the node of [manner] that has a name: what a
+  /// screen reader reads the manners under.
+  SemanticsNode? mannersNode(WidgetTester tester, Finder manner) {
+    var node = tester.getSemantics(manner).parent;
+    while (node != null && node.label.isEmpty) {
+      node = node.parent;
+    }
+    return node;
+  }
 
   String typedIn(WidgetTester tester, Finder scope) =>
       tester.widget<TextField>(nameIn(scope)).controller!.text;
@@ -188,6 +200,38 @@ void main() {
       await scrollTo(tester, markChip('間食', '控えた'));
       expect(markChip('間食', '控えた'), findsOneWidget);
       expect(await stored.markedPrecautions(today.previous), isEmpty);
+    });
+
+    testWidgets('on the day\'s page, the list is opened from beside the '
+        'button that adds', (tester) async {
+      await pumpApp(tester, db: db, clock: clock);
+      await scrollTo(tester, addButton);
+
+      // The one way to the list on the page: none is left by the heading.
+      expect(listButton, findsOneWidget);
+      expect(inside(addField, listButton), findsOneWidget);
+      final listAt = tester.getRect(listButton);
+      final addAt = tester.getRect(addButton);
+      expect(listAt.right, lessThanOrEqualTo(addAt.left));
+      expect(listAt.center.dy, addAt.center.dy);
+      // The heading has its line to itself.
+      expect(
+        tester.getSize(find.text('気を付けること')).width,
+        tester.getSize(addField).width,
+      );
+
+      await press(tester, listButton);
+      expect(headerTitle('気を付けること'), findsOneWidget);
+    });
+
+    testWidgets('in the editor, which is the list, no button opens it', (
+      tester,
+    ) async {
+      await pumpApp(tester, db: db, clock: clock);
+      await openEditor(tester);
+
+      expect(addButton, findsOneWidget);
+      expect(listButton, findsNothing);
     });
 
     testWidgets('offers the items out of use that hold the typed text, and '
@@ -347,8 +391,9 @@ void main() {
     await pumpApp(tester, db: db, clock: clock);
     await openEditor(tester);
 
-    // The same fields as the memo's, by the theme's defaults.
-    expectFieldNamedOnFrame(tester, '名前', within: addField);
+    // The same fields as the memo's, by the theme's defaults. Where an item
+    // is added the field is named for what it takes, a new item.
+    expectFieldNamedOnFrame(tester, '新しい項目', within: addField);
     await revise(tester, '入浴');
     expectFieldNamedOnFrame(tester, '名前', within: dialog);
   });
@@ -363,19 +408,30 @@ void main() {
 
     // On a card, a part with no node of its own is read as the whole card,
     // named by every line of text the card holds.
-    void expectReadOnTheirOwn(Finder scope) {
+    void expectReadOnTheirOwn(Finder scope, {required String fieldName}) {
       final field = tester.getSemantics(nameIn(scope));
       final read = field.getSemanticsData();
       expect(read.flagsCollection.isTextField, isTrue);
-      expect(read.label, '名前');
+      expect(read.label, fieldName);
       expect(field.rect.size, tester.getSize(nameIn(scope)));
+      // What the two manners choose is not shown. It names the node that
+      // holds the two and nothing else, so it is read just before them.
+      expect(inside(scope, find.text('気を付け方')), findsNothing);
+      final named = {
+        for (final manner in ['控える', '続ける'])
+          mannersNode(tester, mannerIn(scope, manner)),
+      };
+      expect(named, hasLength(1));
+      expect(named.single?.label, '気を付け方');
       expect(
-        tester.getSemantics(inside(scope, find.text('気を付け方'))).label,
-        '気を付け方',
+        named.single?.rect.size,
+        tester.getSize(
+          inside(scope, find.byType(SegmentedButton<PrecautionManner>)),
+        ),
       );
     }
 
-    expectReadOnTheirOwn(addField);
+    expectReadOnTheirOwn(addField, fieldName: '新しい項目');
     // The items offered are read from where the field is, not from the
     // whole card.
     SemanticsNode? offeredFrom = tester.getSemantics(nameIn(addField));
@@ -387,7 +443,7 @@ void main() {
 
     await openEditor(tester);
     await revise(tester, '間食');
-    expectReadOnTheirOwn(dialog);
+    expectReadOnTheirOwn(dialog, fieldName: '名前');
   });
 
   testWidgets('a name typed on the day\'s page stays when the page is '
@@ -484,8 +540,8 @@ void main() {
       expect(read('控える').flagsCollection.isChecked, CheckedState.isFalse);
       expect(read('続ける').flagsCollection.isChecked, CheckedState.isTrue);
       expect(read('続ける').flagsCollection.isSelected, Tristate.isTrue);
-      // Named once, before the two.
-      expect(inside(addField, find.text('気を付け方')), findsOneWidget);
+      // Named to screen readers, by the node that holds the two.
+      expect(mannersNode(tester, mannerIn(addField, '続ける'))?.label, '気を付け方');
     }, variant: bothSystems);
   });
 
@@ -502,6 +558,61 @@ void main() {
       expect(row('間食', '控える'), findsOneWidget);
       await scrollTo(tester, find.text('散歩'));
       expect(row('散歩', '続ける'), findsOneWidget);
+    });
+
+    double topOf(WidgetTester tester, Finder part) => tester.getRect(part).top;
+    double bottomOf(WidgetTester tester, Finder part) =>
+        tester.getRect(part).bottom;
+
+    testWidgets('the add field ends the items in use, above those out of '
+        'use, and an item added shows right above it', (tester) async {
+      await stored.addToRefrain('間食');
+      final walk = await stored.addToKeepUp('散歩');
+      await stored.setPrecautionInUse(walk.id, inUse: false);
+      await pumpApp(tester, db: db, clock: clock);
+      await openEditor(tester);
+
+      expect(
+        bottomOf(tester, row('間食', '控える')),
+        lessThanOrEqualTo(topOf(tester, addField)),
+      );
+      expect(
+        bottomOf(tester, addField),
+        lessThanOrEqualTo(topOf(tester, find.text('使っていない項目'))),
+      );
+
+      await type(tester, addField, '入浴');
+      await press(tester, addButton);
+      // The last of those in use: under the others, and next to the field.
+      final added = row('入浴', '控える');
+      expect(
+        bottomOf(tester, row('間食', '控える')),
+        lessThanOrEqualTo(topOf(tester, added)),
+      );
+      expect(topOf(tester, addField) - bottomOf(tester, added), fieldGap);
+    });
+
+    testWidgets('starts with the add field while no item is in use, which '
+        'keeps what is typed when the first one comes into use', (
+      tester,
+    ) async {
+      final walk = await stored.addToKeepUp('散歩');
+      await stored.setPrecautionInUse(walk.id, inUse: false);
+      await pumpApp(tester, db: db, clock: clock);
+      await openEditor(tester);
+
+      // No room is left above for a row that is not there.
+      final atStart = topOf(tester, addField);
+      expect(atStart - topOf(tester, find.byType(ReorderableListView)), 16);
+
+      await type(tester, addField, '入浴');
+      await press(tester, find.byTooltip('散歩の操作'));
+      await press(tester, find.text('使う'));
+      expect(
+        bottomOf(tester, row('散歩', '続ける')),
+        lessThanOrEqualTo(topOf(tester, addField)),
+      );
+      expect(typedIn(tester, addField), '入浴');
     });
   });
 
@@ -770,14 +881,38 @@ void main() {
     });
   });
 
+  testWidgets('the manners end where the name field ends, as wide as the two '
+      'need, on the day\'s page, in the editor and in the dialog', (
+    tester,
+  ) async {
+    await stored.addToRefrain('入浴');
+    await pumpApp(tester, db: db, clock: clock);
+
+    void expectAtLineEnd(Finder scope) {
+      final nameAt = tester.getRect(nameIn(scope));
+      final mannersAt = tester.getRect(
+        inside(scope, find.byType(SegmentedButton<PrecautionManner>)),
+      );
+      expect(mannersAt.right, nameAt.right);
+      expect(mannersAt.left, greaterThan(nameAt.left));
+    }
+
+    await scrollTo(tester, addButton);
+    expectAtLineEnd(addField);
+    await openEditor(tester);
+    expectAtLineEnd(addField);
+    await revise(tester, '入浴');
+    expectAtLineEnd(dialog);
+  });
+
   // A RenderFlex overflow surfaces as an exception and fails these tests.
   for (final max in maxTextScales.entries) {
     const long = '朝起きたらすぐにストレッチをする';
     final manners = find.byType(SegmentedButton<PrecautionManner>);
 
     testWidgets('the add field fits the day\'s page of a small phone at the '
-        '${max.key.name} max text size, the manners as tall as a finger '
-        'needs', (tester) async {
+        '${max.key.name} max text size, the manners and the buttons as tall '
+        'as a finger needs', (tester) async {
       await stored.addToKeepUp(long);
       useSmallPhone(tester, textScale: max.value);
       await pumpApp(tester, db: db, clock: clock);
@@ -787,15 +922,24 @@ void main() {
         tester.getSize(inside(addField, manners)).height,
         greaterThanOrEqualTo(kMinInteractiveDimension),
       );
-      expect(tester.getRect(addField).left, greaterThanOrEqualTo(0));
-      expect(
-        tester.getRect(addField).right,
-        lessThanOrEqualTo(smallPhone.width),
-      );
-      expect(
-        tester.getRect(addButton).right,
-        lessThanOrEqualTo(tester.getRect(addField).right),
-      );
+      final fieldAt = tester.getRect(addField);
+      expect(fieldAt.left, greaterThanOrEqualTo(0));
+      expect(fieldAt.right, lessThanOrEqualTo(smallPhone.width));
+      // The manners end with the line, within it.
+      final mannersAt = tester.getRect(inside(addField, manners));
+      expect(mannersAt.right, fieldAt.right);
+      expect(mannersAt.left, greaterThanOrEqualTo(fieldAt.left));
+      // The button that adds stays at the line's end, with the one to the
+      // list before it on the line. A line too short for the two would
+      // overflow, which fails the test.
+      final addAt = tester.getRect(addButton);
+      final listAt = tester.getRect(listButton);
+      expect(addAt.right, fieldAt.right);
+      expect(listAt.left, greaterThanOrEqualTo(fieldAt.left));
+      expect(listAt.right, lessThanOrEqualTo(addAt.left));
+      for (final button in [addAt, listAt]) {
+        expect(button.height, greaterThanOrEqualTo(kMinInteractiveDimension));
+      }
     }, variant: TargetPlatformVariant.only(max.key));
 
     testWidgets('the dialog that revises an item fits a small phone at the '
@@ -810,10 +954,12 @@ void main() {
         tester.getSize(inside(dialog, manners)).height,
         greaterThanOrEqualTo(kMinInteractiveDimension),
       );
-      expect(
-        tester.getRect(inside(dialog, manners)).right,
-        lessThanOrEqualTo(tester.getRect(dialog).right),
-      );
+      // The manners end with the name field's line, within it.
+      final nameAt = tester.getRect(nameIn(dialog));
+      final mannersAt = tester.getRect(inside(dialog, manners));
+      expect(mannersAt.right, nameAt.right);
+      expect(mannersAt.left, greaterThanOrEqualTo(nameAt.left));
+      expect(nameAt.right, lessThanOrEqualTo(tester.getRect(dialog).right));
       // What does not fit is reached by scrolling the dialog.
       await tester.ensureVisible(saveButton);
       await tester.pumpAndSettle();

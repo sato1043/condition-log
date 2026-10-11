@@ -155,13 +155,16 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get editPrecautions => '編集';
+  String get openPrecautionList => '一覧';
 
   @override
-  String get noPrecautionsYet => 'まだ登録していません。「編集」から登録できます';
+  String get noPrecautionsYet => 'まだ登録していません';
 
   @override
   String get precautionsTitle => '気を付けること';
+
+  @override
+  String get newPrecaution => '新しい項目';
 
   @override
   String get precautionName => '名前';

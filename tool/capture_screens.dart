@@ -107,12 +107,12 @@ Future<void> _takePages(_Device device, String size) async {
   await device.waitFor('追加');
   await take('daily-log-end');
 
-  // From a fresh start: at the largest text the button that opens the
-  // editor is above the page's end. The day's page has a button that adds
+  // From a fresh start: the button that opens the editor is beside the one
+  // that adds, down the day's page. The day's page has a button that adds
   // too, so the editor is known by the buttons of its rows.
   await device.openApp();
-  await device.scrollTo('編集');
-  await device.tap('編集');
+  await device.scrollTo('一覧');
+  await device.tap('一覧');
   await device.waitForMention('の操作');
   await take('precautions');
 
