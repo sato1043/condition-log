@@ -1,0 +1,586 @@
+{
+  "@@locale": "ja",
+  "appTitle": "体調記録",
+  "@appTitle": {
+    "description": "アプリの名前"
+  },
+  "aboutApp": "このアプリについて",
+  "@aboutApp": {
+    "description": "設定の行の名前と、押すと出す全文のダイアログの題名。読み上げはこの題名でダイアログを告げる"
+  },
+  "aboutAppText": "医療上の判断は主治医にご相談ください。\n\nこのアプリは、体調などを本人が記録して振り返るためのものです。疾病の診断、治療又は予防に使用されることを目的としておらず、医療機器ではありません。",
+  "@aboutAppText": {
+    "description": "設定の「このアプリについて」を押すと出す全文。主治医に相談する旨と、医療機器でない旨を含む（厚生労働省のプログラムの医療機器該当性に関するガイドライン 8（1））"
+  },
+  "dayHeading": "{month}月{day}日（{weekday, select, 1{月} 2{火} 3{水} 4{木} 5{金} 6{土} 7{日} other{}}）",
+  "@dayHeading": {
+    "description": "記録のページの見出しの日付。weekday は Dart の DateTime.weekday（ISO 8601）で、1 が月曜、7 が日曜",
+    "placeholders": {
+      "month": {"type": "int"},
+      "day": {"type": "int"},
+      "weekday": {"type": "String"}
+    }
+  },
+  "today": "今日",
+  "@today": {
+    "description": "表示中の日が今日であることを示す印"
+  },
+  "previousDay": "前の日",
+  "nextDay": "次の日",
+  "goToToday": "今日へ",
+  "@goToToday": {
+    "description": "過去の日のページから今日のページへ移るボタン"
+  },
+  "conditionOverall": "全体の体調",
+  "conditionPain": "痛み",
+  "conditionFatigue": "だるさ",
+  "conditionFatigueNote": "元気が出ない",
+  "@conditionFatigueNote": {
+    "description": "だるさの定義。見出しにだけ添え、段の読み上げ名には入れない"
+  },
+  "conditionNote": "（{note}）",
+  "@conditionNote": {
+    "description": "見出しで項目名の直後に、補足の大きさで添える定義",
+    "placeholders": {
+      "note": {"type": "String"}
+    }
+  },
+  "conditionSleep": "睡眠",
+  "conditionAppetite": "食欲",
+  "conditionMood": "気分",
+  "conditionMoodNote": "不安・落ち込み",
+  "@conditionMoodNote": {
+    "description": "気分の定義。見出しにだけ添え、段の読み上げ名には入れない"
+  },
+  "stepBad": "悪い",
+  "@stepBad": {
+    "description": "段の語。尺度「悪い〜良い」の 1 段目（左端）"
+  },
+  "stepSomewhatBad": "やや悪い",
+  "@stepSomewhatBad": {
+    "description": "段の語。尺度「悪い〜良い」の 2 段目"
+  },
+  "stepUsual": "普通",
+  "@stepUsual": {
+    "description": "段の語。尺度「悪い〜良い」の 3 段目（中央）"
+  },
+  "stepSomewhatGood": "やや良い",
+  "@stepSomewhatGood": {
+    "description": "段の語。尺度「悪い〜良い」の 4 段目"
+  },
+  "stepGood": "良い",
+  "@stepGood": {
+    "description": "段の語。尺度「悪い〜良い」の 5 段目（右端）"
+  },
+  "stepStrong": "強い",
+  "@stepStrong": {
+    "description": "段の語。尺度「強い〜無い」の 1 段目（左端）"
+  },
+  "stepModerate": "中くらい",
+  "@stepModerate": {
+    "description": "段の語。尺度「強い〜無い」の 2 段目"
+  },
+  "stepMild": "軽い",
+  "@stepMild": {
+    "description": "段の語。尺度「強い〜無い」の 3 段目（中央）"
+  },
+  "stepSlight": "わずか",
+  "@stepSlight": {
+    "description": "段の語。尺度「強い〜無い」の 4 段目"
+  },
+  "stepNone": "無い",
+  "@stepNone": {
+    "description": "段の語。尺度「強い〜無い」の 5 段目（右端）"
+  },
+  "stepAbsent": "無い",
+  "@stepAbsent": {
+    "description": "段の語。尺度「無い〜ある」の 1 段目（左端）"
+  },
+  "stepLittle": "少ない",
+  "@stepLittle": {
+    "description": "段の語。尺度「無い〜ある」の 2 段目"
+  },
+  "stepUsualAmount": "普通",
+  "@stepUsualAmount": {
+    "description": "段の語。尺度「無い〜ある」の 3 段目（中央）"
+  },
+  "stepSomewhatPresent": "ややある",
+  "@stepSomewhatPresent": {
+    "description": "段の語。尺度「無い〜ある」の 4 段目"
+  },
+  "stepPresent": "ある",
+  "@stepPresent": {
+    "description": "段の語。尺度「無い〜ある」の 5 段目（右端）"
+  },
+  "scoreStep": "{condition}、{step}",
+  "@scoreStep": {
+    "description": "段のラジオボタンの読み上げ名。step は段の語",
+    "placeholders": {
+      "condition": {"type": "String"},
+      "step": {"type": "String"}
+    }
+  },
+  "clearScore": "選択を解除",
+  "@clearScore": {
+    "description": "選んだ段をもう一度押すと選択が消えることを伝える読み上げの補足"
+  },
+  "wholeDayHint": "この日全体をふり返って",
+  "@wholeDayHint": {
+    "description": "記録の一覧の先頭の補足。段は、その日のいちばんつらいときでなく、その日全体をならした体調を表す。大きい文字でも 1 行に収まるよう短く保つ"
+  },
+  "memo": "メモ",
+  "@memo": {
+    "description": "自由メモの欄の名前"
+  },
+  "memoHint": "よい出来事・悪い出来事や、何時ごろ具合が変わったかを書いておくと、あとで経過を見るときに役立ちます",
+  "@memoHint": {
+    "description": "メモの欄の下の補足。入力の後も出し続ける"
+  },
+  "precautions": "気を付けること",
+  "@precautions": {
+    "description": "日々気を付ける事柄と行動の欄の名前"
+  },
+  "precautionsHint": "できた日に印を付けます",
+  "@precautionsHint": {
+    "description": "気を付けることの欄の見出しの直下の補足。印は、控える項目は控えた日に、続ける項目は続けた日に付ける"
+  },
+  "precautionRefrained": "控えた",
+  "@precautionRefrained": {
+    "description": "控える項目の印のラベル。日によらず同じ語で、選んだ状態で印を示す"
+  },
+  "precautionKeptUp": "続けた",
+  "@precautionKeptUp": {
+    "description": "続ける項目の印のラベル。日によらず同じ語で、選んだ状態で印を示す"
+  },
+  "precautionMarkLabel": "{name}、{done}",
+  "@precautionMarkLabel": {
+    "description": "印の読み上げ名。項目の名前と印のラベル（例: 間食、控えた）",
+    "placeholders": {
+      "name": {"type": "String"},
+      "done": {"type": "String"}
+    }
+  },
+  "editPrecautions": "編集",
+  "@editPrecautions": {
+    "description": "気を付けることの編集の画面を開くボタン"
+  },
+  "noPrecautionsYet": "まだ登録していません。「編集」から登録できます",
+  "precautionsTitle": "気を付けること",
+  "precautionName": "名前",
+  "precautionManner": "気を付け方",
+  "@precautionManner": {
+    "description": "気を付け方（控える・続ける）を選ぶボタンの名前"
+  },
+  "mannerRefrain": "控える",
+  "mannerKeepUp": "続ける",
+  "precautionWithManner": "{name}　{manner}",
+  "@precautionWithManner": {
+    "description": "足す欄の候補の 1 行。項目の名前と気を付け方（例: 散歩　続ける）",
+    "placeholders": {
+      "name": {"type": "String"},
+      "manner": {"type": "String"}
+    }
+  },
+  "precautionTurnedDown": "同じ名前と気を付け方の項目が既にあります",
+  "@precautionTurnedDown": {
+    "description": "足す・直すを断ったとき、名前の欄の下に出す文。同じ名前と気を付け方の組を、ほかの項目が持っている"
+  },
+  "addPrecaution": "追加",
+  "revisePrecaution": "直す",
+  "@revisePrecaution": {
+    "description": "気を付けることの各行のメニューの項目。名前と気を付け方を直すダイアログを開く"
+  },
+  "revisePrecautionTitle": "項目を直す",
+  "revisePrecautionHint": "印のある項目の気を付け方を変えると、前の項目は使っていない項目へ移ります",
+  "@revisePrecautionHint": {
+    "description": "項目を直すダイアログの補足"
+  },
+  "takeOutOfUse": "使わない",
+  "takeIntoUse": "使う",
+  "precautionMenu": "{name}の操作",
+  "@precautionMenu": {
+    "description": "気を付けることの各行の操作のメニューを開くボタンの名前",
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "moveUp": "上へ移動",
+  "moveDown": "下へ移動",
+  "tookOutOfUse": "「{name}」を使っていない項目へ移しました",
+  "@tookOutOfUse": {
+    "description": "気を付けることを使わない側へ移したとき、読み上げだけで告げる文",
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "tookIntoUse": "「{name}」を使う項目へ戻しました",
+  "@tookIntoUse": {
+    "description": "気を付けることを使う側へ戻したとき、読み上げだけで告げる文",
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "notInUseHeading": "使っていない項目",
+  "notInUseHint": "使わない項目は体調のページに出ません。印を付けた日の記録は残り、項目の操作の「使う」で戻せます",
+  "cancel": "キャンセル",
+  "save": "保存",
+  "settings": "設定",
+  "dayStartHour": "日付が変わる時刻",
+  "@dayStartHour": {
+    "description": "1 日の区切りの時刻の設定の名前"
+  },
+  "hourValue": "{hour} 時",
+  "@hourValue": {
+    "placeholders": {
+      "hour": {"type": "int"}
+    }
+  },
+  "dayStartHourHint": "この時刻より前の記録は、前の日に入ります",
+  "loadFailed": "記録を読み込めませんでした",
+  "@loadFailed": {
+    "description": "記録の読み込みに失敗したときの表示"
+  },
+  "settingsLoadFailed": "設定を読み込めませんでした",
+  "@settingsLoadFailed": {
+    "description": "設定の読み込みに失敗したときの表示"
+  },
+  "loadFailedHint": "続くときは、アプリを閉じて開き直してください",
+  "@loadFailedHint": {
+    "description": "読み込みの失敗の表示に添える、次に取る行動の案内"
+  },
+  "loadAgain": "読み込み直す",
+  "@loadAgain": {
+    "description": "読み込みに失敗したものを読み込み直すボタン"
+  },
+  "saveFailed": "保存できませんでした。もう一度お試しください",
+  "@saveFailed": {
+    "description": "記録の書き込みに失敗したときの知らせ"
+  },
+  "memoSaveFailed": "メモを保存できませんでした。欄に残っている文は、あとで自動で保存し直します",
+  "@memoSaveFailed": {
+    "description": "メモの書き込みに失敗したときの知らせ。メモは欄に文が残り、次の契機で自動で保存し直す"
+  },
+  "navRecord": "体調",
+  "@navRecord": {
+    "description": "下端のナビゲーションの行き先。今日のページ（その日の体調を記録するページ）を開く。画面の中心の評価を名指し、見出しの「体調記録」と揃える。「記録」はこれまでの記録に読まれ、「メモ」は同じページのメモの欄と重なり、「今日」は前の日を開いている間も残る"
+  },
+  "navReview": "経過",
+  "@navReview": {
+    "description": "下端のナビゲーションの行き先。体調の経過を見る画面を開く。「ふり返り」は仕事の用語に聞こえるので、診察でも耳にする語にした"
+  },
+  "navVisits": "診察",
+  "@navVisits": {
+    "description": "下端のナビゲーションの行き先。診察の記録の画面を開く"
+  },
+  "reviewTitle": "経過",
+  "@reviewTitle": {
+    "description": "体調の経過を見る画面の題名"
+  },
+  "reviewPending": "体調の経過を見る画面です。いまは準備中です。",
+  "@reviewPending": {
+    "description": "中身をまだ作っていない、経過の画面が何の画面かと、準備中であることを示す 1 文"
+  },
+  "visitsTitle": "診察",
+  "@visitsTitle": {
+    "description": "診察 1 件のページの題名"
+  },
+  "visitListTitle": "診察一覧",
+  "@visitListTitle": {
+    "description": "診察の記録の一覧の画面の題名。下端のナビゲーションの名前は navVisits"
+  },
+  "noVisitsYet": "まだ診察を記録していません。「診察を足す」から記録できます",
+  "@noVisitsYet": {
+    "description": "診察が 1 件も無いときに、一覧の代わりに出す文"
+  },
+  "addVisit": "診察を足す",
+  "@addVisit": {
+    "description": "日付を選んで診察を 1 件作るボタン"
+  },
+  "sameDayVisitTitle": "同じ日の診察があります",
+  "@sameDayVisitTitle": {
+    "description": "診察を足すときに選んだ日に診察がすでにあれば出すダイアログの見出し"
+  },
+  "sameDayVisitBody": "{day}の診察の記録がすでにあります。別の診察を足しますか。",
+  "@sameDayVisitBody": {
+    "description": "sameDayVisitTitle のダイアログの本文。day は選んだ日の日付",
+    "placeholders": {
+      "day": {"type": "String"}
+    }
+  },
+  "addAnotherVisit": "別の診察を足す",
+  "@addAnotherVisit": {
+    "description": "sameDayVisitTitle のダイアログで、選んだ日にもう 1 件の診察を作るボタン"
+  },
+  "openExistingVisit": "今ある診察を開く",
+  "@openExistingVisit": {
+    "description": "sameDayVisitTitle のダイアログで、足さずに今ある 1 件の診察を開くボタン"
+  },
+  "pickVisitFromList": "一覧から選ぶ",
+  "@pickVisitFromList": {
+    "description": "sameDayVisitTitle のダイアログで、選んだ日に 2 件以上の診察があるとき openExistingVisit の代わりに出すボタン。足さずに一覧のままにする"
+  },
+  "newDayVisitTitle": "診察を足しますか",
+  "@newDayVisitTitle": {
+    "description": "記録のページのボタンで、表示している日の診察を作る前に出すダイアログの見出し"
+  },
+  "newDayVisitBody": "{day}の診察を新しく作ります。",
+  "@newDayVisitBody": {
+    "description": "newDayVisitTitle のダイアログの本文。day は表示している日の日付",
+    "placeholders": {
+      "day": {"type": "String"}
+    }
+  },
+  "add": "足す",
+  "@add": {
+    "description": "確かめのダイアログで、作ることを決めるボタン"
+  },
+  "dayVisitAdd": "診察を足す",
+  "@dayVisitAdd": {
+    "description": "記録のページで、表示している日に診察が無いときに出すボタン。押すとその日の診察を 1 件作って開く"
+  },
+  "dayVisitAddLabel": "{day}の診察を足す",
+  "@dayVisitAddLabel": {
+    "description": "dayVisitAdd のボタンの読み上げ。day は表示している日の日付",
+    "placeholders": {
+      "day": {"type": "String"}
+    }
+  },
+  "dayVisitOpen": "診察を開く",
+  "@dayVisitOpen": {
+    "description": "記録のページで、表示している日に診察があるときに出すボタン。1 件ならその診察、2 件以上なら診察の一覧を開く"
+  },
+  "dayVisitOpenLabel": "{day}の診察を開く",
+  "@dayVisitOpenLabel": {
+    "description": "dayVisitOpen のボタンの読み上げ。day は表示している日の日付",
+    "placeholders": {
+      "day": {"type": "String"}
+    }
+  },
+  "visitNoNotes": "まだ書いていません",
+  "@visitNoNotes": {
+    "description": "診察の一覧の行で、診察前に聞くことも診察で聞いたことも空のときに抜き出しの代わりに出す文"
+  },
+  "visitRowLabel": "{day}、{excerpt}",
+  "@visitRowLabel": {
+    "description": "診察の一覧の 1 行の読み上げ。day は日付、excerpt は書いたことの 1 行目か「まだ書いていません」",
+    "placeholders": {
+      "day": {"type": "String"},
+      "excerpt": {"type": "String"}
+    }
+  },
+  "toAsk": "診察前に聞くこと",
+  "@toAsk": {
+    "description": "診察のページの欄の名前。診察の前に、医師に聞きたいことを書く"
+  },
+  "toAskHint": "診察の前に、医師に聞きたいことを書いておけます",
+  "@toAskHint": {
+    "description": "診察前に聞くことの欄の下の補足"
+  },
+  "heard": "診察で聞いたこと",
+  "@heard": {
+    "description": "診察のページの欄の名前。診察の後に、医師から聞いたことを書く"
+  },
+  "heardHint": "診察の後に、医師から聞いたこと（薬や指示の変更など）を書いておけます",
+  "@heardHint": {
+    "description": "診察で聞いたことの欄の下の補足"
+  },
+  "noteSaveFailed": "保存できませんでした。欄に残っている文は、あとで自動で保存し直します",
+  "@noteSaveFailed": {
+    "description": "診察のページの欄の保存に失敗したときの知らせ。欄が自分で保存し直すので、やり直しを促さない"
+  },
+  "noteSaveLost": "保存できませんでした。最後に書いた文は残っていません",
+  "@noteSaveLost": {
+    "description": "メモや診察の欄の保存が、ページを離れたり日を送ったりして欄が無くなった後に失敗したときの知らせ。保存し直せないことを伝える"
+  },
+  "changeVisitDay": "診察の日を変える",
+  "@changeVisitDay": {
+    "description": "診察のページのヘッダーの、日付を選び直すボタンの説明（ツールチップと読み上げ）"
+  },
+  "pickVisitDayHelp": "診察の日を選ぶ",
+  "@pickVisitDayHelp": {
+    "description": "診察を足すときと日を変えるときに出す、日付を選ぶダイアログの見出し"
+  },
+  "deleteVisit": "この診察を消す",
+  "@deleteVisit": {
+    "description": "診察のページの、その診察を消すボタン"
+  },
+  "deleteVisitTitle": "この診察を消しますか",
+  "@deleteVisitTitle": {
+    "description": "診察を消す前の確かめのダイアログの題名"
+  },
+  "deleteVisitBody": "{day}の診察と、書いたことを消します。元に戻せません。",
+  "@deleteVisitBody": {
+    "description": "診察を消す前の確かめのダイアログの本文。day は診察の日付",
+    "placeholders": {
+      "day": {"type": "String"}
+    }
+  },
+  "delete": "消す",
+  "@delete": {
+    "description": "消す確かめのダイアログで、消すことを選ぶボタン"
+  },
+  "visitNotFound": "この診察は見つかりません。消したか、まだ記録していない診察です",
+  "@visitNotFound": {
+    "description": "どの記録にも当たらない診察を開いたときに、診察のページに出す文"
+  },
+  "backToVisits": "診察の一覧へ",
+  "@backToVisits": {
+    "description": "見つからない診察のページから、診察の一覧へ戻るボタン"
+  },
+  "careProvider": "受診先",
+  "@careProvider": {
+    "description": "診察を受けた病院・診療科・医師をまとめた記録の名前。診察のページの行の名前にも使う"
+  },
+  "careProvidersTitle": "受診先",
+  "@careProvidersTitle": {
+    "description": "受診先を足し・直し・使わないにする画面の題名"
+  },
+  "editCareProviders": "受診先を編集",
+  "@editCareProviders": {
+    "description": "受診先の画面を開く操作。診察の一覧のヘッダーのアイコンの読み上げとツールチップ、受診先を選ぶダイアログの項目に使う"
+  },
+  "addCareProvider": "受診先を足す",
+  "@addCareProvider": {
+    "description": "受診先を新しく足すボタンと、そのダイアログの題名"
+  },
+  "renameCareProvider": "受診先を直す",
+  "@renameCareProvider": {
+    "description": "受診先の名前を直すダイアログの題名"
+  },
+  "careProviderHospital": "病院",
+  "@careProviderHospital": {
+    "description": "受診先の 3 つの欄のうち病院の欄の名前"
+  },
+  "careProviderDepartment": "診療科",
+  "@careProviderDepartment": {
+    "description": "受診先の 3 つの欄のうち診療科の欄の名前"
+  },
+  "careProviderDoctor": "医師名",
+  "@careProviderDoctor": {
+    "description": "受診先の 3 つの欄のうち医師名の欄の名前"
+  },
+  "careProviderNamesHint": "どれか 1 つを書けば保存できます",
+  "@careProviderNamesHint": {
+    "description": "受診先の 3 つの欄のダイアログの補足。3 つとも書かなくてよいことを示す。足すときと直すときの両方に出る"
+  },
+  "careProviderRenameHint": "直した名前は、この受診先を選んだこれまでの診察にも出ます。医師が替わったときは、新しく足して古いほうを使わないにします",
+  "@careProviderRenameHint": {
+    "description": "受診先を直すダイアログの補足。直すと過去の診察の表示も変わることと、替わったときの扱い"
+  },
+  "careProviderNameSeparator": "／",
+  "@careProviderNameSeparator": {
+    "description": "受診先の表示名で、病院・診療科・医師名の間に置く区切りの文字"
+  },
+  "careProvidersUsualHint": "いつもの受診先は、診察の一覧を開いたときの絞り込みと、体調のページから足す診察に使います",
+  "@careProvidersUsualHint": {
+    "description": "受診先の画面の補足。いつもの受診先が何に効くかを示す"
+  },
+  "noCareProvidersYet": "まだ受診先を登録していません。「受診先を足す」から登録できます",
+  "@noCareProvidersYet": {
+    "description": "受診先の画面で、受診先が 1 件も無いときの文"
+  },
+  "careProviderUsualMark": "いつもの",
+  "@careProviderUsualMark": {
+    "description": "いつもの受診先の行に添える印の文字"
+  },
+  "careProviderUsualLabel": "いつもの受診先",
+  "@careProviderUsualLabel": {
+    "description": "いつもの受診先の印の読み上げ"
+  },
+  "careProviderMenu": "{name}の操作",
+  "@careProviderMenu": {
+    "description": "受診先の各行の操作のメニューを開くボタンの名前",
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "makeUsualCareProvider": "いつもの受診先にする",
+  "@makeUsualCareProvider": {
+    "description": "受診先の行のメニューの項目。その受診先をいつもの受診先にする"
+  },
+  "clearUsualCareProvider": "いつもの受診先から外す",
+  "@clearUsualCareProvider": {
+    "description": "いつもの受診先の行のメニューの項目。いつもの受診先を無しにする"
+  },
+  "renameCareProviderMenu": "名前を直す",
+  "@renameCareProviderMenu": {
+    "description": "受診先の行のメニューの項目。名前を直すダイアログを開く"
+  },
+  "tookCareProviderOutOfUse": "「{name}」を使っていない受診先へ移しました",
+  "@tookCareProviderOutOfUse": {
+    "description": "受診先を使わない側へ移したとき、読み上げだけで告げる文",
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "tookCareProviderIntoUse": "「{name}」を使っている受診先へ戻しました",
+  "@tookCareProviderIntoUse": {
+    "description": "受診先を使う側へ戻したとき、読み上げだけで告げる文",
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "careProvidersNotInUseHeading": "使っていない受診先",
+  "@careProvidersNotInUseHeading": {
+    "description": "受診先の画面で、使っていない受診先の区分の見出し"
+  },
+  "careProvidersNotInUseHint": "使わない受診先は、選ぶ一覧に出ません。選んでいた診察には名前が残ります",
+  "@careProvidersNotInUseHint": {
+    "description": "使っていない受診先の区分の補足。使わないにしたときの効き目を示す"
+  },
+  "careProvidersLoadFailed": "受診先を読み込めませんでした",
+  "@careProvidersLoadFailed": {
+    "description": "受診先かいつもの受診先の読み込みに失敗したときの表示"
+  },
+  "careProviderNotChosen": "選んでいません",
+  "@careProviderNotChosen": {
+    "description": "診察のページの受診先の行で、受診先を選んでいないときの表示"
+  },
+  "careProviderNotInUse": "{name}（使っていない受診先）",
+  "@careProviderNotInUse": {
+    "description": "使っていない受診先の名前に、使っていない旨を添えた表示",
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "chooseCareProvider": "受診先を選ぶ",
+  "@chooseCareProvider": {
+    "description": "診察の受診先を選ぶダイアログの題名"
+  },
+  "chooseNoCareProvider": "選ばない",
+  "@chooseNoCareProvider": {
+    "description": "受診先を選ぶダイアログで、受診先を選ばない（外す）項目"
+  },
+  "noCareProvidersToChoose": "使っている受診先がありません",
+  "@noCareProvidersToChoose": {
+    "description": "受診先を選ぶダイアログで、選べる受診先が 1 件も無いときの文。登録が無いときにも、すべてを使わないにしたときにも当たる"
+  },
+  "visitFilter": "受診先で絞り込む",
+  "@visitFilter": {
+    "description": "絞り込みを選ぶダイアログの題名"
+  },
+  "visitFilterCounted": "受診先で絞り込む {shown}/{total}件",
+  "@visitFilterCounted": {
+    "description": "診察の一覧の絞り込みの部品の枠の上の名前。表示している診察の数と全部の数を添える",
+    "placeholders": {
+      "shown": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "visitFilterCountedSpoken": "受診先で絞り込む、{total}件中{shown}件を表示",
+  "@visitFilterCountedSpoken": {
+    "description": "visitFilterCounted の読み上げ。「3/12」は日付と読まれうるので、数を言葉で並べる",
+    "placeholders": {
+      "shown": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "visitFilterAll": "すべて",
+  "@visitFilterAll": {
+    "description": "診察の一覧を受診先で絞り込まない選択"
+  },
+  "noVisitsForFilter": "この受診先の診察はありません",
+  "@noVisitsForFilter": {
+    "description": "絞り込んだ受診先に当たる診察が無いときの文"
+  }
+}
