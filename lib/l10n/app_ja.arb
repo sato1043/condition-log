@@ -185,7 +185,7 @@
   "mannerKeepUp": "続ける",
   "precautionWithManner": "{name}　{manner}",
   "@precautionWithManner": {
-    "description": "足す欄の候補の 1 行。項目の名前と気を付け方（例: 散歩　続ける）",
+    "description": "足す欄の候補の 1 行と、経過の画面の気を付けることの選択肢。項目の名前と気を付け方（例: 散歩　続ける）",
     "placeholders": {
       "name": {"type": "String"},
       "manner": {"type": "String"}
@@ -310,13 +310,35 @@
   "@trendCondition": {
     "description": "経過の画面で、一覧に段を出す項目（全体の体調と 5 項目）を選ぶ欄の名前。欄の枠の上と、選ぶダイアログの題名に出す"
   },
-  "trendRowDay": "{month}/{day}（{weekday, select, 1{月} 2{火} 3{水} 4{木} 5{金} 6{土} 7{日} other{}}）",
+  "trendPrecaution": "気を付けること",
+  "@trendPrecaution": {
+    "description": "経過の画面で、行の気を付けることの印を出す項目を選ぶ欄の名前。欄の枠の上と、選ぶダイアログの題名に出す"
+  },
+  "trendPrecautionAll": "すべて",
+  "@trendPrecautionAll": {
+    "description": "気を付けることの選択肢。項目で絞らず、どの項目の印でも行に印を出す。既定。項目の選択肢は名前と気を付け方（precautionWithManner）で出す"
+  },
+  "trendRowDay": "{day} {weekday, select, 1{月} 2{火} 3{水} 4{木} 5{金} 6{土} 7{日} other{}}",
   "@trendRowDay": {
-    "description": "経過の一覧の 1 行の日付。枠と同じ段に収めるため、見出しの日付（dayHeading）より短くする。weekday は dayHeading と同じ",
+    "description": "経過の一覧の 1 行の日付。日と曜日だけを出す。月は区切り（trendMonth）が示す。weekday は dayHeading と同じ",
     "placeholders": {
-      "month": {"type": "int"},
       "day": {"type": "int"},
       "weekday": {"type": "String"}
+    }
+  },
+  "trendMonth": "{month}月",
+  "@trendMonth": {
+    "description": "経過の一覧で、期間の最初の日と各月の 1 日の行の上に挟む区切り。行の日付（trendRowDay）は月を持たない。読み上げも同じ語。今日の年と違う月は trendMonthOfYear で出す",
+    "placeholders": {
+      "month": {"type": "int"}
+    }
+  },
+  "trendMonthOfYear": "{year}年{month}月",
+  "@trendMonthOfYear": {
+    "description": "経過の一覧の月の区切りのうち、今日の年と違う月のもの。同じ月が今年にも在るときに見分けるために年を添える。読み上げも同じ語",
+    "placeholders": {
+      "year": {"type": "int"},
+      "month": {"type": "int"}
     }
   },
   "trendNotRecorded": "未記録",
@@ -327,17 +349,21 @@
   "@trendHasMemo": {
     "description": "経過の一覧で、メモのある日の印の読み上げ。本文は読まない"
   },
-  "trendManaged": "{name} {done}",
-  "@trendManaged": {
-    "description": "経過の一覧の行に出す、その日にできた気を付けること。name は項目の名前、done は印のラベル（控えた・続けた）",
-    "placeholders": {
-      "name": {"type": "String"},
-      "done": {"type": "String"}
-    }
+  "trendHasPrecautionMark": "気を付けることの印あり",
+  "@trendHasPrecautionMark": {
+    "description": "経過の一覧で、気を付けることの印のある日の行の読み上げ。項目の名前は読まない"
+  },
+  "trendOpenPrecautions": "気を付けることを開く",
+  "@trendOpenPrecautions": {
+    "description": "経過の一覧の行の、気を付けることの印（押せるアイコン）の名前。押すと、その日の記録を気を付けることの欄の位置で開く"
+  },
+  "trendOpenMemo": "メモを開く",
+  "@trendOpenMemo": {
+    "description": "経過の一覧の行の、メモの印（押せるアイコン）の名前。押すと、その日の記録をメモの欄の位置で開く"
   },
   "trendSeparator": "、",
   "@trendSeparator": {
-    "description": "経過の一覧の行で、並べて出すものの区切り。読み上げの部分どうし（日付・添え書き・段・気を付けること・メモ）と、行に出す気を付けることどうしを区切る"
+    "description": "経過の一覧の行の読み上げで、部分どうし（日付・添え書き・段・気を付けることの印・メモ）を区切る"
   },
   "trendVisitDay": "診察 {day}",
   "@trendVisitDay": {

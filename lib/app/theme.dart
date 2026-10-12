@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../ui/weekend_fills.dart';
+
 /// Colors of the daily log screen, taken from docs/appearance.md. The IDs in
 /// the comments point back to that document. Parts take their colors from
 /// these roles as Material assigns them, except where the theme says why not.
@@ -36,6 +38,12 @@ const _dailyLogScheme = ColorScheme(
 ThemeData dailyLogTheme() {
   return ThemeData(
     colorScheme: _dailyLogScheme,
+    // R11: the lines of a Saturday and of a Sunday in the trend list. The
+    // mean of the ground and a pale blue (V105), and of the ground and a
+    // pale red (V106); not roles of the scheme, so the theme holds them.
+    extensions: const [
+      WeekendFills(saturday: Color(0xFFCADAE3), sunday: Color(0xFFF0CED3)),
+    ],
     scaffoldBackgroundColor: _dailyLogScheme.surface,
     // V60: every page's header bar matches the bottom navigation, which
     // Material colors surfaceContainer, rather than the ground. Material also

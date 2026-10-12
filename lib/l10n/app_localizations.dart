@@ -394,7 +394,7 @@ abstract class AppLocalizations {
   /// **'続ける'**
   String get mannerKeepUp;
 
-  /// 足す欄の候補の 1 行。項目の名前と気を付け方（例: 散歩　続ける）
+  /// 足す欄の候補の 1 行と、経過の画面の気を付けることの選択肢。項目の名前と気を付け方（例: 散歩　続ける）
   ///
   /// In ja, this message translates to:
   /// **'{name}　{manner}'**
@@ -616,11 +616,35 @@ abstract class AppLocalizations {
   /// **'項目'**
   String get trendCondition;
 
-  /// 経過の一覧の 1 行の日付。枠と同じ段に収めるため、見出しの日付（dayHeading）より短くする。weekday は dayHeading と同じ
+  /// 経過の画面で、行の気を付けることの印を出す項目を選ぶ欄の名前。欄の枠の上と、選ぶダイアログの題名に出す
   ///
   /// In ja, this message translates to:
-  /// **'{month}/{day}（{weekday, select, 1{月} 2{火} 3{水} 4{木} 5{金} 6{土} 7{日} other{}}）'**
-  String trendRowDay(int month, int day, String weekday);
+  /// **'気を付けること'**
+  String get trendPrecaution;
+
+  /// 気を付けることの選択肢。項目で絞らず、どの項目の印でも行に印を出す。既定。項目の選択肢は名前と気を付け方（precautionWithManner）で出す
+  ///
+  /// In ja, this message translates to:
+  /// **'すべて'**
+  String get trendPrecautionAll;
+
+  /// 経過の一覧の 1 行の日付。日と曜日だけを出す。月は区切り（trendMonth）が示す。weekday は dayHeading と同じ
+  ///
+  /// In ja, this message translates to:
+  /// **'{day} {weekday, select, 1{月} 2{火} 3{水} 4{木} 5{金} 6{土} 7{日} other{}}'**
+  String trendRowDay(int day, String weekday);
+
+  /// 経過の一覧で、期間の最初の日と各月の 1 日の行の上に挟む区切り。行の日付（trendRowDay）は月を持たない。読み上げも同じ語。今日の年と違う月は trendMonthOfYear で出す
+  ///
+  /// In ja, this message translates to:
+  /// **'{month}月'**
+  String trendMonth(int month);
+
+  /// 経過の一覧の月の区切りのうち、今日の年と違う月のもの。同じ月が今年にも在るときに見分けるために年を添える。読み上げも同じ語
+  ///
+  /// In ja, this message translates to:
+  /// **'{year}年{month}月'**
+  String trendMonthOfYear(int year, int month);
 
   /// 経過の一覧で、選んだ項目の段が無い日に、段の枠の場所へ出す語。その日にほかの項目・メモ・気を付けることの印が在っても出す
   ///
@@ -634,13 +658,25 @@ abstract class AppLocalizations {
   /// **'メモあり'**
   String get trendHasMemo;
 
-  /// 経過の一覧の行に出す、その日にできた気を付けること。name は項目の名前、done は印のラベル（控えた・続けた）
+  /// 経過の一覧で、気を付けることの印のある日の行の読み上げ。項目の名前は読まない
   ///
   /// In ja, this message translates to:
-  /// **'{name} {done}'**
-  String trendManaged(String name, String done);
+  /// **'気を付けることの印あり'**
+  String get trendHasPrecautionMark;
 
-  /// 経過の一覧の行で、並べて出すものの区切り。読み上げの部分どうし（日付・添え書き・段・気を付けること・メモ）と、行に出す気を付けることどうしを区切る
+  /// 経過の一覧の行の、気を付けることの印（押せるアイコン）の名前。押すと、その日の記録を気を付けることの欄の位置で開く
+  ///
+  /// In ja, this message translates to:
+  /// **'気を付けることを開く'**
+  String get trendOpenPrecautions;
+
+  /// 経過の一覧の行の、メモの印（押せるアイコン）の名前。押すと、その日の記録をメモの欄の位置で開く
+  ///
+  /// In ja, this message translates to:
+  /// **'メモを開く'**
+  String get trendOpenMemo;
+
+  /// 経過の一覧の行の読み上げで、部分どうし（日付・添え書き・段・気を付けることの印・メモ）を区切る
   ///
   /// In ja, this message translates to:
   /// **'、'**

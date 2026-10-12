@@ -25,6 +25,18 @@ class PrecautionMarkList extends ConsumerWidget {
   final CalendarDay day;
   final SaveFailureHandler onSaveFailed;
 
+  /// Whether the list of [day] still waits for its first read, watched. It
+  /// shows a wait until that read ends, well or not, and grows then, moving
+  /// what is laid out under it; a part that must not be moved, as a record
+  /// sent to a section, asks here and is built again when the wait is over.
+  static bool watchWaiting(WidgetRef ref, CalendarDay day) =>
+      ref.watch(dayPrecautionsProvider(day).select(_waits));
+
+  /// Nothing read yet, and no failure to say: a read that failed and is
+  /// tried again by itself still waits.
+  static bool _waits(AsyncValue<DayPrecautions> precautions) =>
+      !precautions.hasValue && precautions is! AsyncError;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -44,10 +56,20 @@ class PrecautionMarkList extends ConsumerWidget {
           child: Text(l10n.precautions, style: textTheme.titleMedium),
         ),
         const SizedBox(height: 4),
-        // A reload after an edit keeps the last list on screen until the new
-        // one arrives, rather than blinking to a spinner.
         switch (precautions) {
-          AsyncData(:final value) || AsyncLoading(:final value?) => Column(
+          _ when _waits(precautions) => const Center(
+            child: CircularProgressIndicator(),
+          ),
+          AsyncError(:final isLoading) => LoadFailure(
+            message: l10n.loadFailed,
+            loading: isLoading,
+            onRetry: () => ref
+              ..invalidate(precautionListProvider)
+              ..invalidate(dayPrecautionsProvider(day)),
+          ),
+          // A reload after an edit keeps the last list on screen until the
+          // new one arrives, rather than blinking to a spinner.
+          AsyncValue(requireValue: final value) => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (value.items.isEmpty)
@@ -85,14 +107,6 @@ class PrecautionMarkList extends ConsumerWidget {
               ),
             ],
           ),
-          AsyncError(:final isLoading) => LoadFailure(
-            message: l10n.loadFailed,
-            loading: isLoading,
-            onRetry: () => ref
-              ..invalidate(precautionListProvider)
-              ..invalidate(dayPrecautionsProvider(day)),
-          ),
-          AsyncLoading() => const Center(child: CircularProgressIndicator()),
         },
       ],
     );

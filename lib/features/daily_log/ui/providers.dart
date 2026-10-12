@@ -114,7 +114,9 @@ class DayPrecautionsNotifier extends AsyncNotifier<DayPrecautions>
   /// The precautions in use, followed by those out of use that were marked
   /// on the day: a mark stays visible, and can be undone, after its item is
   /// taken out of use. Built on the edited list, so an edit shows here at
-  /// once.
+  /// once. The trend offers its precautions by the same rule, with its
+  /// period in the day's place (`TrendRecords.offeredPrecautions`): a
+  /// change to one is a change to the other.
   @override
   Future<DayPrecautions> build() async {
     // The two reads do not depend on each other, so neither waits for the

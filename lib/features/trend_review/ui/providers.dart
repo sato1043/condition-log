@@ -33,6 +33,20 @@ class TrendCondition extends Notifier<Condition> {
   void choose(Condition condition) => state = condition;
 }
 
+/// The precaution the marks of the lines are narrowed to, by its id, kept
+/// while the app runs; null for all of them. One that the period shown does
+/// not offer is kept as well, and counts as all meanwhile (see
+/// [TrendRecords.offered]).
+final chosenTrendPrecautionProvider =
+    NotifierProvider<ChosenTrendPrecaution, int?>(ChosenTrendPrecaution.new);
+
+class ChosenTrendPrecaution extends Notifier<int?> {
+  @override
+  int? build() => null;
+
+  void choose(int? id) => state = id;
+}
+
 /// The period shown, the latest visit day before today that it may start
 /// from, and its days, oldest first and ending on today.
 typedef TrendSpan = ({

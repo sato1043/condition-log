@@ -1,9 +1,11 @@
+import 'package:flutter/semantics.dart' show SemanticsNode;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:condition_log/app/app_frame.dart';
 import 'package:condition_log/data/database.dart';
 import 'package:condition_log/domain/calendar_day.dart';
+import 'package:condition_log/features/daily_log/data/drift_daily_log_repository.dart';
 import 'package:condition_log/features/daily_log/data/drift_precaution_repository.dart';
 import 'package:condition_log/features/visits/data/drift_care_provider_repository.dart';
 import 'package:condition_log/features/visits/data/drift_visit_repository.dart';
@@ -15,6 +17,23 @@ import '../support/actions.dart';
 import '../support/app.dart';
 import '../support/precautions.dart';
 import '../support/screen.dart';
+
+/// R8 with the one exception it names (V107): a mark of a line of the trend
+/// is as wide as a thing to press and as tall as its line, which beside the
+/// date is lower. The marks are named here and left out; how large they are
+/// is measured with the lines (trend_review_page_test.dart). The lines run
+/// from edge to edge of their list, where the guideline reads nothing.
+class _ExceptTheTrendsMarks extends MinimumTapTargetGuideline {
+  const _ExceptTheTrendsMarks()
+    : super(size: const Size(48, 48), link: 'docs/appearance.md, R8');
+
+  static const marks = {'気を付けることを開く', 'メモを開く'};
+
+  @override
+  bool shouldSkipNode(SemanticsNode node) =>
+      marks.contains(node.getSemanticsData().tooltip) ||
+      super.shouldSkipNode(node);
+}
 
 /// R8: every part that takes a tap is at least 48 dp square, on the smallest
 /// screen this app is checked against. The guideline reads only the parts on
@@ -32,19 +51,30 @@ void main() {
   }
 
   /// Checks the page shown at its top and again at its bottom.
-  Future<void> expectPageLargeEnough(WidgetTester tester) async {
-    await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+  Future<void> expectPageLargeEnough(
+    WidgetTester tester, {
+    AccessibilityGuideline guideline = androidTapTargetGuideline,
+  }) async {
+    await expectLater(tester, meetsGuideline(guideline));
     final lists = find.byType(Scrollable);
-    // Toward the far end of the list: the trend's is laid out from its foot
-    // and opens there, so its far end is its top.
-    final fromFoot =
-        tester.state<ScrollableState>(lists.first).axisDirection ==
-        AxisDirection.up;
     // Twice: one drag crosses the whole page within a frame, and a part
     // first drawn while it loads grows after the drag stopped at what was
     // the end then.
     for (var drags = 0; drags < 2; drags++) {
-      await tester.drag(lists.first, Offset(0, fromFoot ? 3000 : -3000));
+      // The first list with somewhere to go: the trend's page has its
+      // choices above its list, and they fit this screen.
+      final list = tester
+          .stateList<ScrollableState>(lists)
+          .where((list) => list.position.maxScrollExtent > 0)
+          .firstOrNull;
+      if (list == null) continue;
+      // Toward the far end of the list: the trend's is laid out from its
+      // foot and opens there, so its far end is its top.
+      final fromFoot = list.axisDirection == AxisDirection.up;
+      await tester.drag(
+        find.byWidget(list.widget),
+        Offset(0, fromFoot ? 3000 : -3000),
+      );
       await tester.pumpAndSettle();
     }
     // The second check reads the bottom: every list has reached its end,
@@ -56,8 +86,16 @@ void main() {
     expect(ends, isNotEmpty);
     // Within rounding: a list whose parts are a fraction of a pixel tall
     // ends a hair's breadth from its end in floating point.
-    expect(ends, everyElement(moreOrLessEquals(0, epsilon: 1e-9)));
-    await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+    expect(
+      ends,
+      everyElement(moreOrLessEquals(0, epsilon: 1e-9)),
+      reason:
+          'What each thing that is sent has left to go, in the order of the '
+          'page. Only the first with somewhere to go is sent: a page with '
+          'two of them, as the trend has where its choices do not fit, '
+          'leaves the second short of its end.',
+    );
+    await expectLater(tester, meetsGuideline(guideline));
   }
 
   for (final (page, open) in [
@@ -74,11 +112,37 @@ void main() {
       useSmallPhone(tester);
       final db = memoryDatabase();
       addTearDown(db.close);
-      await DriftPrecautionRepository(db).addToRefrain('間食');
+      // A precaution marked and a memo on every day the trend shows before
+      // today, so its lines hold their marks at the top of the list and at
+      // its foot.
+      final precautions = DriftPrecautionRepository(db);
+      final logs = DriftDailyLogRepository(db, clock: DateTime.now);
+      final snack = await precautions.addToRefrain('間食');
+      for (var day = 18; day <= 30; day++) {
+        await logs.setMemo(CalendarDay(2026, 9, day), 'メモ');
+        await precautions.setPrecautionMarked(
+          CalendarDay(2026, 9, day),
+          snack.id,
+          marked: true,
+        );
+      }
       await pumpApp(tester, db: db, clock: TestClock(DateTime(2026, 10, 1, 9)));
       await open(tester);
 
-      await expectPageLargeEnough(tester);
+      final onTrend = page == 'review';
+      for (final mark in _ExceptTheTrendsMarks.marks) {
+        expect(
+          find.byTooltip(mark),
+          onTrend ? findsWidgets : findsNothing,
+          reason: mark,
+        );
+      }
+      await expectPageLargeEnough(
+        tester,
+        guideline: onTrend
+            ? const _ExceptTheTrendsMarks()
+            : androidTapTargetGuideline,
+      );
     });
   }
 

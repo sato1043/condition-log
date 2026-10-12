@@ -300,7 +300,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get trendCondition => '項目';
 
   @override
-  String trendRowDay(int month, int day, String weekday) {
+  String get trendPrecaution => '気を付けること';
+
+  @override
+  String get trendPrecautionAll => 'すべて';
+
+  @override
+  String trendRowDay(int day, String weekday) {
     String _temp0 = intl.Intl.selectLogic(weekday, {
       '1': '月',
       '2': '火',
@@ -311,7 +317,17 @@ class AppLocalizationsJa extends AppLocalizations {
       '7': '日',
       'other': '',
     });
-    return '$month/$day（$_temp0）';
+    return '$day $_temp0';
+  }
+
+  @override
+  String trendMonth(int month) {
+    return '$month月';
+  }
+
+  @override
+  String trendMonthOfYear(int year, int month) {
+    return '$year年$month月';
   }
 
   @override
@@ -321,9 +337,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get trendHasMemo => 'メモあり';
 
   @override
-  String trendManaged(String name, String done) {
-    return '$name $done';
-  }
+  String get trendHasPrecautionMark => '気を付けることの印あり';
+
+  @override
+  String get trendOpenPrecautions => '気を付けることを開く';
+
+  @override
+  String get trendOpenMemo => 'メモを開く';
 
   @override
   String get trendSeparator => '、';

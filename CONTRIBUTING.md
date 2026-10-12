@@ -189,7 +189,12 @@ flutter pub get --enforce-lockfile
 - **Flutter SDK の版**: lock は下限（`flutter: ">=3.47.0"`）しか持たない。作者の環境は 3.47.5 で
   ある（[開発環境セットアップ](docs/references/setup-windows.md)）。`material_ui` は
   `flutter_localizations` の内部のファイルを import するので、SDK を上げるとコンパイルできなく
-  なることがある。SDK を上げたら `flutter analyze` と `flutter test` を回してから使う
+  なることがある。SDK を上げたら `flutter analyze` と `flutter test` を回してから使う。
+  `lib/features/trend_review/ui/trend_rows.dart` の `_dateWidth` は、`Text` が受け取った
+  様式へ重ねるもののうち、字の幅を変えるもの（OS の太字・字の間と語の間の空き）を
+  写しているので、新しい版の `widgets/text.dart` と読み比べる。日付の欄は測った幅に
+  固定してあり、写しがずれると日付の端が欠ける。太字の下の幅はテストのフォントでは
+  変わらず、テストは落ちない
 - **SQLite のバイナリ**: `sqlite3` の build hook が、初回のビルドと `flutter test` のときに
   github.com からビルド済みの SQLite を取得する。中身は `pubspec.lock` が固定する版の sha256 で
   照合する。アプリが実行時に通信するのではない。ネットワークの無い環境では初回のビルドが

@@ -98,8 +98,10 @@ GoRoute _screensOf(Destination destination) => switch (destination) {
             TrendDayPage.dayAt(state) == null ? TrendReviewPage.path : null,
         // Built only for a location the redirect let through: one that
         // names a day.
-        builder: (context, state) =>
-            TrendDayPage(day: TrendDayPage.dayAt(state)!),
+        builder: (context, state) => TrendDayPage(
+          day: TrendDayPage.dayAt(state)!,
+          openAt: TrendDayPage.sectionAt(state),
+        ),
       ),
     ],
   ),

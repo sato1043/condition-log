@@ -2,41 +2,106 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../ui/day_heading.dart';
+import '../../../ui/weekend_fills.dart';
 import '../../daily_log/domain/daily_log.dart';
 import '../../daily_log/ui/condition_labels.dart';
 import '../../daily_log/ui/icon_size.dart';
-import '../../daily_log/ui/precaution_words.dart';
 import '../domain/trend_records.dart';
 
-/// The room between the words of a line and its marks, and between the
-/// boxes and the marks after them.
-const _wordsToMarks = 16.0;
-const _boxesToMarks = 8.0;
+/// The room at each end of a line, and between the date's column and the
+/// boxes.
+const _lineEnd = 16.0;
+const _dateToBoxes = 16.0;
 
-/// The width the marks after the boxes take: the memo's and the one that
-/// tells the line opens, each of [size].
-double _afterBoxes(double size) => _boxesToMarks + 2 * size;
+/// The room over and under a line's date and boxes (V107). It leaves a line
+/// lower than a thing to press is elsewhere, the one exception R8 names:
+/// the list is looked back over on a day the person can spare for it, not
+/// on one they are unwell, so it shows more days at once rather than
+/// keeping each line easy to press.
+const _lineInset = 2.0;
 
-/// Whether a line [lineWidth] wide has room for the marks beside a date.
-/// Asked of a date with two digits for the month and for the day, not of
-/// the line's own, so every line of the list answers alike and the boxes
-/// stand in one column.
-bool _marksFitBesideDate(BuildContext context, double lineWidth) {
-  final size = iconSizeBesideText(context);
-  final marksWidth = _StepBoxes.widthOf(size) + _afterBoxes(size);
+/// The room between the date and what stands under it, where large text
+/// leaves the boxes no room beside the date.
+const _dateToUnder = 4.0;
+
+/// The width of the bar that tells today's line (V108).
+const _todayBar = 8.0;
+
+/// The width a mark that is pressed takes, whatever the size of its icon.
+const _markWidth = kMinInteractiveDimension;
+
+/// The marks a line keeps room for at its end: the precautions' and the
+/// memo's.
+const _markCount = 2;
+
+/// The room between the marks and the line's end, beside the date: the
+/// icon of the last mark ends where the line's own room begins, so its
+/// mark, wider than the icon, reaches into that room.
+double _marksToEnd(double iconSize) => _lineEnd - (_markWidth - iconSize) / 2;
+
+/// The room the marks take at a line's end, beside the date.
+double _marksRoom(double iconSize) =>
+    _markCount * _markWidth + _marksToEnd(iconSize);
+
+/// The style of a line's date. Its digits are as wide as each other, so the
+/// weekdays of a day with one digit and of a day with two stand in a column.
+TextStyle? _dateStyle(BuildContext context) =>
+    Theme.of(context).textTheme.bodyLarge
+        ?.copyWith(fontFeatures: const [FontFeature.tabularFigures()]);
+
+/// A day with two digits and a weekday, which stand for every such date:
+/// the digits are as wide as each other ([_dateStyle]), and a weekday is
+/// one character of the font's own width.
+const _widestDay = 28;
+const _anyWeekday = '${DateTime.wednesday}';
+
+/// The width of the date's column: that of a day with two digits, so every
+/// line of the list puts its boxes in one column.
+///
+/// The date is held to this width and does not wrap, so it must be measured
+/// as `Text` draws it. Of what `Text` lays over the style it is given, this
+/// copies what widens the date: bold where the OS asks for bold text, and
+/// the room the system asks for between letters and between words. Read
+/// against `Text` when the Flutter SDK is changed.
+double _dateWidth(BuildContext context) {
+  // `Text` lays the style of the text around it under one that inherits.
+  // The theme's does not, so there is none to copy here.
+  assert(_dateStyle(context)?.inherit == false);
+  final style = _dateStyle(context)?.merge(
+    TextStyle(
+      fontWeight: MediaQuery.boldTextOf(context) ? FontWeight.bold : null,
+      letterSpacing: MediaQuery.maybeLetterSpacingOverrideOf(context),
+      wordSpacing: MediaQuery.maybeWordSpacingOverrideOf(context),
+    ),
+  );
   final date = TextPainter(
     text: TextSpan(
-      text: AppLocalizations.of(context).trendRowDay(12, 28, '3'),
-      style: Theme.of(context).textTheme.bodyLarge,
+      text: AppLocalizations.of(context).trendRowDay(_widestDay, _anyWeekday),
+      style: style,
     ),
     textDirection: Directionality.of(context),
     textScaler: MediaQuery.textScalerOf(context),
     maxLines: 1,
   )..layout();
-  final dateWidth = date.width;
+  final width = date.width;
   date.dispose();
-  return lineWidth - marksWidth - _wordsToMarks >= dateWidth;
+  return width.ceilToDouble();
 }
+
+/// Whether a line [lineWidth] wide, from edge to edge, has room for the
+/// boxes and the marks beside a date's column [dateWidth] wide. Every line
+/// of the list answers alike, as the column is as wide on each.
+bool _boxesFitBesideDate({
+  required double lineWidth,
+  required double dateWidth,
+  required double iconSize,
+}) =>
+    lineWidth >=
+    _lineEnd +
+        dateWidth +
+        _dateToBoxes +
+        _StepBoxes.widthOf(iconSize) +
+        _marksRoom(iconSize);
 
 /// The words of the two ends of the boxes for [condition], over the boxes'
 /// column: which end is which changes with the condition, and the boxes
@@ -74,32 +139,39 @@ class TrendScaleEnds extends StatelessWidget {
         ),
       ),
     );
+    final dateWidth = _dateWidth(context);
     return ExcludeSemantics(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: LayoutBuilder(
-          // Where the lines below put their boxes.
-          builder: (context, line) =>
-              _marksFitBesideDate(context, line.maxWidth)
-              ? Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    ends,
-                    SizedBox(width: _afterBoxes(size)),
-                  ],
-                )
-              : Align(alignment: Alignment.centerLeft, child: ends),
+      child: LayoutBuilder(
+        // Where the lines below put their boxes.
+        builder: (context, line) => Padding(
+          padding: EdgeInsets.only(
+            left:
+                _lineEnd +
+                (_boxesFitBesideDate(
+                      lineWidth: line.maxWidth,
+                      dateWidth: dateWidth,
+                      iconSize: size,
+                    )
+                    ? dateWidth + _dateToBoxes
+                    : 0),
+            right: _lineEnd,
+          ),
+          child: Align(alignment: Alignment.centerLeft, child: ends),
         ),
       ),
     );
   }
 }
 
-/// One day of the trend list: the date, the step recorded for [condition]
-/// as a mark in one of five boxes laid out like the steps of the day's page
-/// (worse end on the left), the precautions managed that day, and whether
-/// the day has a memo. A day with no step for the condition says so where
-/// the boxes would be. Pressed, it opens the day's record.
+/// One day of the trend list: the day and its weekday, the step recorded
+/// for [condition] as a mark in one of five boxes laid out like the steps
+/// of the day's page (worse end on the left), a mark where a precaution
+/// was managed that day, and one where the day has a memo. A day with no
+/// step for the condition says so where the boxes would be.
+///
+/// Pressed, the line opens the day's record; each mark opens it at what the
+/// mark stands for. Today's line has a bar at its start, and a Saturday's
+/// and a Sunday's are filled: the weekday is in the words too.
 ///
 /// It copies what was recorded and judges nothing: no arrow, no difference
 /// from another day, and no color for good or bad.
@@ -109,64 +181,52 @@ class TrendDayRow extends StatelessWidget {
     required this.row,
     required this.condition,
     required this.onOpen,
+    required this.onOpenPrecautions,
+    required this.onOpenMemo,
   });
 
   final TrendDay row;
   final Condition condition;
   final VoidCallback onOpen;
+  final VoidCallback onOpenPrecautions;
+  final VoidCallback onOpenMemo;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
     final labels = conditionLabels(l10n, condition);
     final day = row.day;
     final score = row.score;
     final iconSize = iconSizeBesideText(context);
-    // The marks take the color of the words. Left to the theme, an icon
-    // that stands alone is a black from outside the app's colors.
-    final markColor = Theme.of(context).colorScheme.onSurface;
-    final managed = [
-      for (final precaution in row.managed)
-        (name: precaution.name, done: l10n.markLabel(precaution.manner)),
-    ];
-    final words = [
-      l10n.trendRowDay(day.month, day.day, '${day.weekday}'),
-      if (row.isToday) l10n.today,
-    ];
+    final dateWidth = _dateWidth(context);
+    final fill = theme.extension<WeekendFills>()!.forWeekday(day.weekday);
+    final hasPrecautionMark = row.hasPrecautionMark;
 
-    Widget marksWhen({required bool beside}) => Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (score == null)
-          // In the boxes' place and as wide, so the marks after it keep
-          // their column. Beside the date, the word would leave boxes no
-          // room on the line.
-          SizedBox(
+    final date = Text(
+      l10n.trendRowDay(day.day, '${day.weekday}'),
+      style: _dateStyle(context),
+      softWrap: false,
+    );
+
+    Widget stepWhen({required bool beside}) => score == null
+        // In the boxes' place and as wide, so the marks after it keep
+        // their column.
+        ? SizedBox(
             width: _StepBoxes.widthOf(iconSize),
             child: Align(
               alignment: beside ? Alignment.center : Alignment.centerLeft,
-              child: Text(l10n.trendNotRecorded, style: textTheme.bodyLarge),
+              child: Text(
+                l10n.trendNotRecorded,
+                style: theme.textTheme.bodyLarge,
+              ),
             ),
           )
-        else
-          _StepBoxes(score: score, size: iconSize),
-        const SizedBox(width: _boxesToMarks),
-        // Kept empty on a day without a memo, so the boxes of every row
-        // stand in one column.
-        SizedBox.square(
-          dimension: iconSize,
-          child: row.hasMemo
-              // Not the note with a pencil: that one stands for the
-              // record's destination.
-              ? Icon(Icons.comment_outlined, size: iconSize, color: markColor)
-              : null,
-        ),
-        Icon(Icons.chevron_right, size: iconSize, color: markColor),
-      ],
-    );
+        : _StepBoxes(score: score, size: iconSize);
 
-    // One node per row, read in the order the row shows.
+    // One node for the line, read in the order the line shows, with the
+    // month and "today" the line does not show. It takes its press from
+    // the surface inside it. The marks are nodes of their own inside it.
     return Semantics(
       container: true,
       button: true,
@@ -177,72 +237,194 @@ class TrendDayRow extends StatelessWidget {
           l10n.trendNotRecorded
         else
           l10n.scoreStep(labels.name, labels.steps.of(score.value)),
-        for (final item in managed)
-          l10n.precautionMarkLabel(item.name, item.done),
+        if (hasPrecautionMark) l10n.trendHasPrecautionMark,
         if (row.hasMemo) l10n.trendHasMemo,
       ].join(l10n.trendSeparator),
-      onTap: onOpen,
-      excludeSemantics: true,
-      child: InkWell(
-        onTap: onOpen,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            minHeight: kMinInteractiveDimension,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                LayoutBuilder(
-                  builder: (context, line) {
-                    // Wrapped word by word in a column of their own, so a
-                    // word with no room goes under the date and the marks
-                    // stay where every line has them.
-                    final wrapped = Wrap(
-                      spacing: 8,
-                      children: [
-                        for (final word in words)
-                          Text(word, style: textTheme.bodyLarge),
-                      ],
-                    );
-                    // The marks go under the words when large text leaves
-                    // them no room beside a date.
-                    return _marksFitBesideDate(context, line.maxWidth)
-                        ? Row(
-                            children: [
-                              Expanded(child: wrapped),
-                              const SizedBox(width: _wordsToMarks),
-                              marksWhen(beside: true),
-                            ],
+      // A surface of its own, so the fill and what a press lays over it stay
+      // inside the line.
+      child: Material(
+        type: fill == null ? MaterialType.transparency : MaterialType.canvas,
+        color: fill,
+        child: InkWell(
+          onTap: onOpen,
+          child: LayoutBuilder(
+            builder: (context, line) {
+              final beside = _boxesFitBesideDate(
+                lineWidth: line.maxWidth,
+                dateWidth: dateWidth,
+                iconSize: iconSize,
+              );
+              return Stack(
+                children: [
+                  ExcludeSemantics(
+                    child: beside
+                        ? Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              _lineEnd,
+                              _lineInset,
+                              _marksRoom(iconSize),
+                              _lineInset,
+                            ),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: dateWidth,
+                                  child: Align(
+                                    alignment: Alignment.centerRight,
+                                    child: date,
+                                  ),
+                                ),
+                                const SizedBox(width: _dateToBoxes),
+                                stepWhen(beside: true),
+                              ],
+                            ),
                           )
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              wrapped,
-                              const SizedBox(height: 4),
-                              marksWhen(beside: false),
-                            ],
-                          );
-                  },
-                ),
-                if (managed.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      [
-                        for (final item in managed)
-                          l10n.trendManaged(item.name, item.done),
-                      ].join(l10n.trendSeparator),
-                      style: textTheme.bodyLarge,
+                        // The boxes go under the date when large text
+                        // leaves them no room beside it, and the marks
+                        // follow the boxes.
+                        : Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: _lineEnd,
+                              vertical: _lineInset,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                date,
+                                const SizedBox(height: _dateToUnder),
+                                stepWhen(beside: false),
+                              ],
+                            ),
+                          ),
+                  ),
+                  // Over the whole height of the line. Beside the date they
+                  // end the line; under it they follow the boxes, which
+                  // begin where the line's own room ends.
+                  Positioned(
+                    top: 0,
+                    bottom: 0,
+                    left: beside
+                        ? null
+                        : _lineEnd + _StepBoxes.widthOf(iconSize),
+                    right: beside ? _marksToEnd(iconSize) : null,
+                    child: _Marks(
+                      iconSize: iconSize,
+                      onBoxesLine: !beside,
+                      onOpenPrecautions: hasPrecautionMark
+                          ? onOpenPrecautions
+                          : null,
+                      onOpenMemo: row.hasMemo ? onOpenMemo : null,
                     ),
                   ),
-              ],
-            ),
+                  if (row.isToday)
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: _todayBar,
+                      child: ColoredBox(color: theme.colorScheme.onSurface),
+                    ),
+                ],
+              );
+            },
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The marks of a line, each in its place whether the day has it or not, so
+/// the marks of every line stand in one column. A mark is pressed over the
+/// whole height of the line, which beside the date is lower than a thing to
+/// press is elsewhere.
+class _Marks extends StatelessWidget {
+  const _Marks({
+    required this.iconSize,
+    required this.onBoxesLine,
+    required this.onOpenPrecautions,
+    required this.onOpenMemo,
+  });
+
+  final double iconSize;
+
+  /// Whether the icons stand on the boxes' line, under the date, rather
+  /// than in the middle of the line.
+  final bool onBoxesLine;
+
+  /// What a press on each mark does, or null on a day without the mark.
+  final VoidCallback? onOpenPrecautions;
+  final VoidCallback? onOpenMemo;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final marks = [
+      _Mark(
+        // Not the list with bullets: that one opens the precautions to
+        // edit them.
+        icon: Icons.checklist,
+        name: l10n.trendOpenPrecautions,
+        iconSize: iconSize,
+        onBoxesLine: onBoxesLine,
+        onPressed: onOpenPrecautions,
+      ),
+      _Mark(
+        // Not the note with a pencil: that one stands for the record's
+        // destination.
+        icon: Icons.comment_outlined,
+        name: l10n.trendOpenMemo,
+        iconSize: iconSize,
+        onBoxesLine: onBoxesLine,
+        onPressed: onOpenMemo,
+      ),
+    ];
+    // The line keeps room for as many.
+    assert(marks.length == _markCount);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: marks,
+    );
+  }
+}
+
+/// The place of one mark, empty where [onPressed] is null.
+class _Mark extends StatelessWidget {
+  const _Mark({
+    required this.icon,
+    required this.name,
+    required this.iconSize,
+    required this.onBoxesLine,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String name;
+  final double iconSize;
+  final bool onBoxesLine;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: _markWidth,
+      child: onPressed == null
+          ? null
+          : IconButton(
+              icon: Icon(icon),
+              iconSize: iconSize,
+              tooltip: name,
+              onPressed: onPressed,
+              style: IconButton.styleFrom(
+                alignment: onBoxesLine ? Alignment.bottomCenter : null,
+                padding: onBoxesLine
+                    ? const EdgeInsets.only(bottom: _lineInset)
+                    : EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
     );
   }
 }
@@ -298,22 +480,62 @@ class _StepBoxes extends StatelessWidget {
 class TrendVisitDivider extends StatelessWidget {
   const TrendVisitDivider({super.key, required this.row});
 
-  /// The rule before the words, and the gap between a rule and the words.
-  static const _stub = 16.0;
-  static const _gap = 8.0;
-
   final VisitDivider row;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final heading = l10n.dayHeadingOf(row.day);
+    return _WordsOnRule(
+      words: l10n.trendVisitDay(heading),
+      label: l10n.trendVisitDayLabel(heading),
+    );
+  }
+}
+
+/// Tells the month of the days below, which tell their day alone. Not
+/// pressed.
+class TrendMonthDivider extends StatelessWidget {
+  const TrendMonthDivider({super.key, required this.row});
+
+  final MonthDivider row;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final day = row.day;
+    final month = row.tellsYear
+        ? l10n.trendMonthOfYear(day.year, day.month)
+        : l10n.trendMonth(day.month);
+    return _WordsOnRule(words: month, label: month);
+  }
+}
+
+/// A rule across the list with [words] on it, read as [label] in one node:
+/// a heading, so a screen reader can go from one to the next past the days
+/// between them.
+class _WordsOnRule extends StatelessWidget {
+  const _WordsOnRule({required this.words, required this.label});
+
+  /// The rule before the words, and the gap between a rule and the words.
+  static const _stub = 16.0;
+  static const _gap = 8.0;
+
+  final String words;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
     return Semantics(
       container: true,
-      label: l10n.trendVisitDayLabel(heading),
+      header: true,
+      // VoiceOver reads a header only with a level; the headings of a day's
+      // record are of this one too.
+      headingLevel: 2,
+      label: label,
       excludeSemantics: true,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+        padding: const EdgeInsets.fromLTRB(_lineEnd, 12, _lineEnd, 4),
         child: LayoutBuilder(
           builder: (context, line) => Row(
             children: [
@@ -327,7 +549,7 @@ class TrendVisitDivider extends StatelessWidget {
                   maxWidth: line.maxWidth - 2 * (_stub + _gap),
                 ),
                 child: Text(
-                  l10n.trendVisitDay(heading),
+                  words,
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
               ),
