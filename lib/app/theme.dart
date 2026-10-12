@@ -60,6 +60,14 @@ ThemeData dailyLogTheme() {
     // check mark. Material's primary falls below the body text minimum on a
     // dialog under the focus highlight of a hardware keyboard.
     listTileTheme: ListTileThemeData(selectedColor: _dailyLogScheme.onSurface),
+    // V109: a scrollbar's thumb takes the color of the rules between parts.
+    // Material's grey falls below the non-text contrast minimum on the
+    // ground, and the thumb is the one sign that a page goes on below. This
+    // reaches Android alone: on iOS Material hands the scrollbar to
+    // Cupertino without a color.
+    scrollbarTheme: ScrollbarThemeData(
+      thumbColor: WidgetStatePropertyAll(_dailyLogScheme.outlineVariant),
+    ),
     navigationBarTheme: NavigationBarThemeData(
       // V92: the destination shown is filled like a chosen step (V64).
       // Material fills it in secondaryContainer, which falls below the

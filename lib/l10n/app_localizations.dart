@@ -394,7 +394,7 @@ abstract class AppLocalizations {
   /// **'続ける'**
   String get mannerKeepUp;
 
-  /// 足す欄の候補の 1 行と、経過の画面の気を付けることの選択肢。項目の名前と気を付け方（例: 散歩　続ける）
+  /// 足す欄の候補の 1 行と、経過の表示条件のページの気を付けることの選択肢と、今の表示条件の行の下の段。項目の名前と気を付け方（例: 散歩　続ける）
   ///
   /// In ja, this message translates to:
   /// **'{name}　{manner}'**
@@ -580,7 +580,7 @@ abstract class AppLocalizations {
   /// **'経過'**
   String get reviewTitle;
 
-  /// 経過の画面で、一覧に出す期間を選ぶ欄の名前。欄の枠の上と、選ぶダイアログの題名に出す
+  /// 経過の一覧に出す期間の名前。経過の表示条件のページの節の見出しと、今の表示条件の行の読み上げに出す
   ///
   /// In ja, this message translates to:
   /// **'期間'**
@@ -610,23 +610,41 @@ abstract class AppLocalizations {
   /// **'4週間'**
   String get trendPeriodFourWeeks;
 
-  /// 経過の画面で、一覧に段を出す項目（全体の体調と 5 項目）を選ぶ欄の名前。欄の枠の上と、選ぶダイアログの題名に出す
+  /// 経過の一覧に段を出す項目（全体の体調と 5 項目）の名前。経過の表示条件のページの節の見出しと、今の表示条件の行の読み上げに出す
   ///
   /// In ja, this message translates to:
   /// **'項目'**
   String get trendCondition;
 
-  /// 経過の画面で、行の気を付けることの印を出す項目を選ぶ欄の名前。欄の枠の上と、選ぶダイアログの題名に出す
+  /// 経過の一覧で、行の気を付けることの印を出す項目の名前。経過の表示条件のページの節の見出しと、今の表示条件の行の読み上げに出す
   ///
   /// In ja, this message translates to:
   /// **'気を付けること'**
   String get trendPrecaution;
 
-  /// 気を付けることの選択肢。項目で絞らず、どの項目の印でも行に印を出す。既定。項目の選択肢は名前と気を付け方（precautionWithManner）で出す
+  /// 気を付けることの選択肢。項目で絞らず、どの項目の印でも行に印を出す。既定。今の表示条件の行には出さない。項目の選択肢は名前と気を付け方（precautionWithManner）で出す
   ///
   /// In ja, this message translates to:
   /// **'すべて'**
   String get trendPrecautionAll;
+
+  /// 経過の一覧に出す期間・項目・気を付けることを選ぶページ（経過の表示条件のページ）の題名
+  ///
+  /// In ja, this message translates to:
+  /// **'経過の表示条件'**
+  String get trendChoicesTitle;
+
+  /// 経過の一覧の上の、今の表示条件の行。上の段で、期間の後に項目を続ける。period は期間の選択肢の語
+  ///
+  /// In ja, this message translates to:
+  /// **'{period}・'**
+  String trendChoicesLinePeriod(String period);
+
+  /// 今の表示条件の行の読み上げで、選ぶもの（期間・項目・気を付けること）の名前と今の値を並べる。選ぶものどうしは trendSeparator で区切る
+  ///
+  /// In ja, this message translates to:
+  /// **'{name} {value}'**
+  String trendChoiceLabel(String name, String value);
 
   /// 経過の一覧の 1 行の日付。日と曜日だけを出す。月は区切り（trendMonth）が示す。weekday は dayHeading と同じ
   ///
@@ -676,7 +694,7 @@ abstract class AppLocalizations {
   /// **'メモを開く'**
   String get trendOpenMemo;
 
-  /// 経過の一覧の行の読み上げで、部分どうし（日付・添え書き・段・気を付けることの印・メモ）を区切る
+  /// 経過の一覧の行の読み上げで、部分どうし（日付・添え書き・段・気を付けることの印・メモ）を区切る。今の表示条件の行の読み上げでは、選ぶもの（期間・項目・気を付けること）どうしを区切る
   ///
   /// In ja, this message translates to:
   /// **'、'**

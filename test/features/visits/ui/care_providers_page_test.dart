@@ -271,6 +271,36 @@ void main() {
     expect(tester.widget<TextButton>(saveButton()).onPressed, isNull);
   });
 
+  testWidgets('on a screen turned on its side, with the camera\'s notch at '
+      'its start, the words of the page and the heading start where the '
+      'lines do', (tester) async {
+    useScreenOnItsSide(tester, notch: 40);
+    await stored.addCareProvider(hospital);
+    await stored.addCareProvider(clinic);
+    await pumpApp(tester, db: db, clock: clock);
+    await openCareProviders(tester);
+    await choose(tester, '市民病院／内科', '使わない');
+
+    double start(Finder finder) => tester.getTopLeft(finder).dx;
+    final line = start(find.text('中央クリニック'));
+    expect(line, 40);
+    expect(start(find.textContaining('いつもの受診先は、')), line);
+    await scrollTo(tester, find.text('市民病院／内科'));
+    expect(start(find.text('使っていない受診先')), line);
+    expect(start(find.textContaining('選んでいた診察には名前が残ります')), line);
+    expect(start(find.text('市民病院／内科')), line);
+  });
+
+  testWidgets('the words of an empty page start clear of the camera\'s notch', (
+    tester,
+  ) async {
+    useScreenOnItsSide(tester, notch: 40);
+    await pumpApp(tester, db: db, clock: clock);
+    await openCareProviders(tester);
+
+    expect(tester.getTopLeft(find.textContaining('まだ受診先を登録していません')).dx, 40);
+  });
+
   testWidgets('one taken out of use moves down, with no notice to cover the '
       'page', (tester) async {
     await stored.addCareProvider(hospital);
@@ -281,6 +311,11 @@ void main() {
     await choose(tester, '市民病院／内科', '使わない');
     expect(await storedNames(), ['市民病院|内科|（使わない）', '中央クリニック||']);
     expect(find.text('使っていない受診先'), findsOneWidget);
+    // A heading, so a screen reader can go to those out of use past the
+    // ones in use.
+    final heading = tester.getSemantics(find.text('使っていない受診先'));
+    expect(heading, isSemantics(label: '使っていない受診先', isHeader: true));
+    expect(heading.getSemanticsData().headingLevel, 2);
     expect(find.textContaining('選んでいた診察には名前が残ります'), findsOneWidget);
     expect(find.byType(SnackBar), findsNothing);
     // Told to screen readers alone, as the row reads the same in either

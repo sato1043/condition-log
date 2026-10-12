@@ -31,6 +31,10 @@ const _deviceDump = '/data/local/tmp/condition_log_ui.xml';
 /// records is never photographed.
 const _sampleDay = '10月7日（水）';
 
+/// How the trend's line of the choices starts, as a screen reader reads it:
+/// the sample build has a visit before its day, so the period is since it.
+const _trendChoices = '期間 前回の診察から';
+
 /// The text sizes to take, by the name each picture carries.
 const _textScales = {'default': '1.0', 'largest': '2.0'};
 
@@ -120,9 +124,16 @@ Future<void> _takePages(_Device device, String size) async {
   // the day's page.
   await device.openApp();
   await device.tap('経過');
-  await device.waitForMention('期間');
+  // The line above the list reads what is shown, each choice by its name.
+  await device.waitForMention(_trendChoices);
   await take('review');
 
+  await device.tapMention(_trendChoices);
+  await device.waitFor('経過の表示条件');
+  await take('review-choices');
+  await device.tap('戻る');
+
+  await device.waitForMention(_trendChoices);
   await device.tap('診察');
   await device.waitFor('受診先を編集');
   await take('visits');

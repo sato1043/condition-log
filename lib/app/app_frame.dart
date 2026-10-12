@@ -82,6 +82,11 @@ class _AppFrameState extends State<AppFrame> {
   /// the record scrolls on inside the outer scroll. Scrolling back a little
   /// with the finger brings them back before the top, so they are at hand
   /// again without scrolling all the way up.
+  ///
+  /// One scroll nearest the frame is the screen's own. A screen with a
+  /// second beside it keeps that one's notifications to itself, as the trend
+  /// does for what is above its list: at its top, it would be taken for the
+  /// screen at its top.
   bool _follow(ScrollNotification notification) {
     final metrics = notification.metrics;
     if (metrics.axis != Axis.vertical || _hidden(notification.context)) {

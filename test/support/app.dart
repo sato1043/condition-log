@@ -44,6 +44,10 @@ class TestClock {
 /// is not, so the dialog shown on the first launch covers no test's page.
 /// [readsAboutAppShown] has it read the stored record instead, as on a
 /// device: the dialog opens until a launch has closed it.
+///
+/// The app is waited for until it is still. Not [settled], it is given one
+/// frame alone: for a store that holds a read back, over which the wait the
+/// app shows turns and is never still.
 Future<void> pumpApp(
   WidgetTester tester, {
   required AppDatabase db,
@@ -54,6 +58,7 @@ Future<void> pumpApp(
   CareProviderRepository? careProviders,
   SettingsRepository? settings,
   bool readsAboutAppShown = false,
+  bool settled = true,
 }) async {
   // The tests read the Japanese text; another supported language must not
   // change that.
@@ -92,5 +97,9 @@ Future<void> pumpApp(
   // the reverse order they were added). Without it, a test that failed with
   // a visit's page open never ended and held the run until it timed out.
   addTearDown(() => tester.pumpWidget(const SizedBox()));
-  await tester.pumpAndSettle();
+  if (settled) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+  }
 }

@@ -306,6 +306,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get trendPrecautionAll => 'すべて';
 
   @override
+  String get trendChoicesTitle => '経過の表示条件';
+
+  @override
+  String trendChoicesLinePeriod(String period) {
+    return '$period・';
+  }
+
+  @override
+  String trendChoiceLabel(String name, String value) {
+    return '$name $value';
+  }
+
+  @override
   String trendRowDay(int day, String weekday) {
     String _temp0 = intl.Intl.selectLogic(weekday, {
       '1': '月',

@@ -28,13 +28,14 @@
 架空の見本の記録を入れて、Android の実機で撮った画面です。左は OS の文字の大きさが既定の
 とき、右は最大（2 倍）のときです。
 
-| ページ | 既定の文字 | 最大の文字 |
+| ページ | 既定の文字 | 最大の文字（Android・2 倍） |
 |---|---|---|
 | 体調（今日の記録） | <img src="docs/images/screens/daily-log-default.png" width="240" alt="体調のページ（既定の文字）"> | <img src="docs/images/screens/daily-log-largest.png" width="240" alt="体調のページ（最大の文字）"> |
 | 体調（同じページの終わり） | <img src="docs/images/screens/daily-log-end-default.png" width="240" alt="体調のページの終わり。気を付けることの印と足す欄、メモ（既定の文字）"> | <img src="docs/images/screens/daily-log-end-largest.png" width="240" alt="体調のページの終わり。気を付けることの印と足す欄、メモ（最大の文字）"> |
 | 気を付けることの編集 | <img src="docs/images/screens/precautions-default.png" width="240" alt="気を付けることの編集（既定の文字）"> | <img src="docs/images/screens/precautions-largest.png" width="240" alt="気を付けることの編集（最大の文字）"> |
 | 設定 | <img src="docs/images/screens/settings-default.png" width="240" alt="設定（既定の文字）"> | <img src="docs/images/screens/settings-largest.png" width="240" alt="設定（最大の文字）"> |
 | 経過（前回の診察からの一覧） | <img src="docs/images/screens/review-default.png" width="240" alt="経過のページ（既定の文字）"> | <img src="docs/images/screens/review-largest.png" width="240" alt="経過のページ（最大の文字）"> |
+| 経過の表示条件 | <img src="docs/images/screens/review-choices-default.png" width="240" alt="経過の表示条件のページ（既定の文字）"> | <img src="docs/images/screens/review-choices-largest.png" width="240" alt="経過の表示条件のページ（最大の文字）"> |
 | 診察の一覧 | <img src="docs/images/screens/visits-default.png" width="240" alt="診察の一覧（既定の文字）"> | <img src="docs/images/screens/visits-largest.png" width="240" alt="診察の一覧（最大の文字）"> |
 | 1 回の診察 | <img src="docs/images/screens/visit-default.png" width="240" alt="1 回の診察のページ（既定の文字）"> | <img src="docs/images/screens/visit-largest.png" width="240" alt="1 回の診察のページ（最大の文字）"> |
 | 受診先 | <img src="docs/images/screens/care-providers-default.png" width="240" alt="受診先（既定の文字）"> | <img src="docs/images/screens/care-providers-largest.png" width="240" alt="受診先（最大の文字）"> |

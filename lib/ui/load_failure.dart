@@ -25,7 +25,13 @@ class LoadFailure extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final textTheme = Theme.of(context).textTheme;
     return Center(
-      child: Padding(
+      // Sent where the room is short of it, as at the largest text: the
+      // button is the one way out of the failure, and is not left out of
+      // reach under the room's foot.
+      child: SingleChildScrollView(
+        // Not the page's own: a list around the failure is, where there is
+        // one.
+        primary: false,
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,

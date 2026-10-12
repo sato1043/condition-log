@@ -18,6 +18,13 @@ enum TrendPeriod {
   static TrendPeriod defaultFor(CalendarDay? lastVisit) =>
       lastVisit == null ? twoWeeks : sinceLastVisit;
 
+  /// The periods to choose from, in the order to show them: one that
+  /// cannot be chosen now is not offered.
+  static List<TrendPeriod> offeredFor(CalendarDay? lastVisit) => [
+    for (final period in values)
+      if (period.isAvailable(lastVisit)) period,
+  ];
+
   /// The period to show for what the person [chosen]: the choice while it
   /// can be chosen, else the default, so taking the last visit away does not
   /// leave a period with no start.

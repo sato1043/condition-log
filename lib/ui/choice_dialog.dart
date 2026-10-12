@@ -39,8 +39,8 @@ class ChoiceDialog extends StatelessWidget {
   }
 }
 
-/// One choice, [label], of a dialog that chooses one, marked with a check
-/// when [chosen] and read by screen readers as a radio button.
+/// One choice, [label], of a dialog or a page that chooses one, marked with
+/// a check when [chosen] and read by screen readers as a radio button.
 class ChoiceOption extends StatelessWidget {
   const ChoiceOption({
     super.key,

@@ -185,7 +185,7 @@
   "mannerKeepUp": "続ける",
   "precautionWithManner": "{name}　{manner}",
   "@precautionWithManner": {
-    "description": "足す欄の候補の 1 行と、経過の画面の気を付けることの選択肢。項目の名前と気を付け方（例: 散歩　続ける）",
+    "description": "足す欄の候補の 1 行と、経過の表示条件のページの気を付けることの選択肢と、今の表示条件の行の下の段。項目の名前と気を付け方（例: 散歩　続ける）",
     "placeholders": {
       "name": {"type": "String"},
       "manner": {"type": "String"}
@@ -288,7 +288,7 @@
   },
   "trendPeriod": "期間",
   "@trendPeriod": {
-    "description": "経過の画面で、一覧に出す期間を選ぶ欄の名前。欄の枠の上と、選ぶダイアログの題名に出す"
+    "description": "経過の一覧に出す期間の名前。経過の表示条件のページの節の見出しと、今の表示条件の行の読み上げに出す"
   },
   "trendPeriodSinceLastVisit": "前回の診察から",
   "@trendPeriodSinceLastVisit": {
@@ -308,15 +308,34 @@
   },
   "trendCondition": "項目",
   "@trendCondition": {
-    "description": "経過の画面で、一覧に段を出す項目（全体の体調と 5 項目）を選ぶ欄の名前。欄の枠の上と、選ぶダイアログの題名に出す"
+    "description": "経過の一覧に段を出す項目（全体の体調と 5 項目）の名前。経過の表示条件のページの節の見出しと、今の表示条件の行の読み上げに出す"
   },
   "trendPrecaution": "気を付けること",
   "@trendPrecaution": {
-    "description": "経過の画面で、行の気を付けることの印を出す項目を選ぶ欄の名前。欄の枠の上と、選ぶダイアログの題名に出す"
+    "description": "経過の一覧で、行の気を付けることの印を出す項目の名前。経過の表示条件のページの節の見出しと、今の表示条件の行の読み上げに出す"
   },
   "trendPrecautionAll": "すべて",
   "@trendPrecautionAll": {
-    "description": "気を付けることの選択肢。項目で絞らず、どの項目の印でも行に印を出す。既定。項目の選択肢は名前と気を付け方（precautionWithManner）で出す"
+    "description": "気を付けることの選択肢。項目で絞らず、どの項目の印でも行に印を出す。既定。今の表示条件の行には出さない。項目の選択肢は名前と気を付け方（precautionWithManner）で出す"
+  },
+  "trendChoicesTitle": "経過の表示条件",
+  "@trendChoicesTitle": {
+    "description": "経過の一覧に出す期間・項目・気を付けることを選ぶページ（経過の表示条件のページ）の題名"
+  },
+  "trendChoicesLinePeriod": "{period}・",
+  "@trendChoicesLinePeriod": {
+    "description": "経過の一覧の上の、今の表示条件の行。上の段で、期間の後に項目を続ける。period は期間の選択肢の語",
+    "placeholders": {
+      "period": {"type": "String"}
+    }
+  },
+  "trendChoiceLabel": "{name} {value}",
+  "@trendChoiceLabel": {
+    "description": "今の表示条件の行の読み上げで、選ぶもの（期間・項目・気を付けること）の名前と今の値を並べる。選ぶものどうしは trendSeparator で区切る",
+    "placeholders": {
+      "name": {"type": "String"},
+      "value": {"type": "String"}
+    }
   },
   "trendRowDay": "{day} {weekday, select, 1{月} 2{火} 3{水} 4{木} 5{金} 6{土} 7{日} other{}}",
   "@trendRowDay": {
@@ -363,7 +382,7 @@
   },
   "trendSeparator": "、",
   "@trendSeparator": {
-    "description": "経過の一覧の行の読み上げで、部分どうし（日付・添え書き・段・気を付けることの印・メモ）を区切る"
+    "description": "経過の一覧の行の読み上げで、部分どうし（日付・添え書き・段・気を付けることの印・メモ）を区切る。今の表示条件の行の読み上げでは、選ぶもの（期間・項目・気を付けること）どうしを区切る"
   },
   "trendVisitDay": "診察 {day}",
   "@trendVisitDay": {

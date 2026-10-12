@@ -3,14 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/calendar_day.dart';
 import '../../../ui/today.dart';
 import '../../daily_log/domain/daily_log.dart';
+import '../../daily_log/domain/precaution.dart';
 import '../../daily_log/ui/providers.dart';
 import '../../visits/ui/providers.dart';
 import '../domain/trend_period.dart';
 import '../domain/trend_records.dart';
 
-/// The period chosen on the trend page, kept while the app runs; null until
-/// one is chosen, so the period shown can follow the visits till then (see
-/// [trendSpanProvider]).
+/// The period chosen for the trend, on the page of its choices, kept while
+/// the app runs; null until one is chosen, so the period shown can follow
+/// the visits till then (see [trendSpanProvider]).
 final chosenTrendPeriodProvider =
     NotifierProvider<ChosenTrendPeriod, TrendPeriod?>(ChosenTrendPeriod.new);
 
@@ -134,6 +135,17 @@ final trendRecordsProvider = FutureProvider<TrendRecords>((ref) async {
     visitDays: visitDays,
   );
 }, retry: _noRetry);
+
+/// The precaution the marks of the lines are narrowed to, as the records
+/// shown offer it; null for all of them: when none is chosen, when the one
+/// chosen is not offered, and until the records are read. Records that
+/// could not be read again are not read: what those before them offered is
+/// not told as what is shown.
+final shownTrendPrecautionProvider = Provider<Precaution?>((ref) {
+  final records = ref.watch(trendRecordsProvider);
+  if (records.hasError) return null;
+  return records.value?.offered(ref.watch(chosenTrendPrecautionProvider));
+});
 
 /// Reads the period and its records again, after a read failed. Each read
 /// is asked for again: one that failed is kept as it ended, so asking for

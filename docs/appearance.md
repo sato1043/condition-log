@@ -360,10 +360,16 @@ WCAG 2.1 の相対輝度の式）。
 | V65 | `partDailyLogChoiceOutline` | 毎日の記録 | 選んでいない段の枠 | `V50`（`outline`） | カード（V100）に 5.33:1 | 段は自作の部品で、Material の既定を持たない | `R5`, `R7` | `color:g14` | <span style="display:inline-block;width:2.5em;height:1em;background:#385B63;border:1px solid #8888"></span> |
 | V92 | `partDailyLogNavigationShown` | 毎日の記録 | 開いている行き先の塗り（選んだ段 V64 と同じ） | `V26`（`secondary`） | 面（V77）に 4.43:1 | 既定の `secondaryContainer` は面に 1.60:1 で、非テキストの下限を割る | `R2`, `R5`, `R7` | `color:dk8` | <span style="display:inline-block;width:2.5em;height:1em;background:#695B18;border:1px solid #8888"></span> |
 | V93 | `partDailyLogNavigationShownIcon` | 毎日の記録 | 開いている行き先のアイコン | `V27`（`onSecondary`） | `secondary` に 6.75:1 | 塗りを V92 にしたので、既定の `onSecondaryContainer` は塗りに 1.90:1 で読めない | `R2`, `R7` | `color:W` | <span style="display:inline-block;width:2.5em;height:1em;background:#FFFFFF;border:1px solid #8888"></span> |
-| V101 | `partDailyLogChosenRow` | 毎日の記録 | 選択肢のダイアログで選んだ行の文字（印で見分ける） | `V4`（`onSurface`） | ダイアログ（V78）に 6.87:1。フォーカスの重ねの後も 5.33:1 | 既定の `primary` は、物理キーボードのフォーカスの重ね（後述）を載せたダイアログの上で 4.07:1 となり、本文の下限を割る | `R2`, `R7` | `color:dkg14` | <span style="display:inline-block;width:2.5em;height:1em;background:#253532;border:1px solid #8888"></span> |
+| V101 | `partDailyLogChosenRow` | 毎日の記録・経過 | 選択肢のダイアログと、経過の表示条件のページで選んだ行の文字（印で見分ける） | `V4`（`onSurface`） | ダイアログ（V78）に 6.87:1。フォーカスの重ねの後も 5.33:1。地（V3）に 10.27:1。フォーカスの重ねの後も 7.84:1 | 既定の `primary` は、物理キーボードのフォーカスの重ね（後述）を載せたダイアログの上で 4.07:1 となり、本文の下限を割る | `R2`, `R7` | `color:dkg14` | <span style="display:inline-block;width:2.5em;height:1em;background:#253532;border:1px solid #8888"></span> |
 | V102 | `partTrendStepRecorded` | 経過 | 一覧の行の、記録のある段の枠（塗る。段は枠の位置で示す） | `V4`（`onSurface`） | 地（V3）に 10.27:1。土曜・日曜の面（V105・V106）に 8.97・8.86:1 | 枠は自作の部品で、Material の既定を持たない | `R2`, `R7` | `color:dkg14` | <span style="display:inline-block;width:2.5em;height:1em;background:#253532;border:1px solid #8888"></span> |
 | V103 | `partTrendStepEmpty` | 経過 | 一覧の行の、記録の無い段の枠（2 dp の線） | `V51`（`outlineVariant`） | 地（V3）に 4.50:1。土曜・日曜の面（V105・V106）に 3.93・3.88:1 | 枠は自作の部品で、Material の既定を持たない | `R5`, `R7` | `color:s14` | <span style="display:inline-block;width:2.5em;height:1em;background:#297364;border:1px solid #8888"></span> |
 | V108 | `partTrendTodayBar` | 経過 | 一覧の今日の行の、左端の帯（幅 8 dp） | `V4`（`onSurface`） | 地（V3）に 10.27:1。土曜・日曜の面（V105・V106）に 8.97・8.86:1 | 帯は自作の部品で、Material の既定を持たない | `R2`, `R7` | `color:dkg14` | <span style="display:inline-block;width:2.5em;height:1em;background:#253532;border:1px solid #8888"></span> |
+| V109 | `partScrollbarThumb` | 経過 | スクロールバーのつまみ（経過の表示条件のページ。区切り線と同じ色。Android だけに届く） | `V51`（`outlineVariant`） | 地（V3）に 4.50:1 | 既定の灰（`#BCBCBC`）は地に 1.52:1 で、非テキストの下限を割る。つまみは、ページが下へ続くことを示すただ 1 つの印である | `R2`, `R7` | `color:s14` | <span style="display:inline-block;width:2.5em;height:1em;background:#297364;border:1px solid #8888"></span> |
+
+スクロールバーのつまみの色（V109）は、iOS には届かない。Material のスクロールバーは
+iOS で Cupertino のものを組み、色の指定を渡さない。iOS のつまみは Cupertino の既定
+（黒の不透明度 35%）で描かれ、地に重ねると 2.38:1 となり、非テキストの下限に届かない
+（計算。実機では見ていない）。
 
 表に無い部品が既定の当て方で取る色を、置く面の上で測った（2026-10-09。チップは
 2026-10-10。material_ui 1.5.0 の既定）。
@@ -392,6 +398,7 @@ WCAG 2.1 の相対輝度の式）。
 | 塗りのボタン | `primary` を地・カードに | 7.83・7.08:1 | 3:1 |
 | ダイアログのアイコン | `secondary` をダイアログに | 3.61:1 | 3:1 |
 | 押せるアイコン（経過の行の、気を付けることの印とメモの印） | `onSurfaceVariant` を地・土曜の面・日曜の面に。配色がこの役割を定めないので、地の文字 V4 と同じ値になる | 10.27・8.97・8.86:1 | 3:1 |
+| 一覧の行のアイコン（経過の、今の表示条件の行の調整のアイコンと山形） | `onSurfaceVariant` を地に。押せるアイコンと同じく、地の文字 V4 と同じ値になる | 10.27:1 | 3:1 |
 | トーンのボタンの容器 | `secondaryContainer` を地・カードに | 1.95・1.77:1 | 対象外 |
 | 付けたチップの容器 | `secondaryContainer` をカードに | 1.77:1 | 対象外（下の段落） |
 | 並べて選ぶボタンの選んだ側の塗り | `secondaryContainer` を地・カード・ダイアログに | 1.95・1.77・1.31:1 | 対象外（下の段落） |
@@ -588,10 +595,22 @@ OS の設定の大きさで読める（自動テストで確かめた。実機�
     - 押せるアイコン（`IconButton`）の既定は 2026-10-12 に確かめた
       （`icon_button.dart`）。アイコンは `onSurfaceVariant`、押した・フォーカスした
       重ねは `onSurfaceVariant` の不透明度 10%、ポインターを載せた重ねは 8% である
+    - 一覧の行（`ListTile`）の既定は 2026-10-12 に確かめた（`list_tile.dart`）。
+      上の段は `bodyLarge` を `onSurface` で、下の段は `bodyMedium` を
+      `onSurfaceVariant` で、左右のアイコンは `onSurfaceVariant` で描く。選んだ行は
+      文字とアイコンが `primary` で、これは V101 で替えている。経過の、今の表示
+      条件の行はこの既定で描き、下の段（気を付けることの名前）だけを本文の段
+      （`bodyLarge`。R9）にしている。経過の表示条件のページの選択肢も、この既定の
+      行である
     - 押せる面（`InkWell`）の既定は 2026-10-12 に確かめた（`ink_well.dart`・
       `theme_data.dart`）。押した重ねは `ThemeData.highlightColor`（`#BCBCBC` の不透明度
       40%）で、広がる波は `ThemeData.splashColor`（`#C8C8C8` の不透明度 40%）である。
       経過の一覧の行はこの既定で描く
+    - スクロールバー（`Scrollbar`）の既定は 2026-10-12 に確かめた（`scrollbar.dart`）。
+      Android では、つまみは `ThemeData.highlightColor` を不透明にした色（`#BCBCBC`）
+      で、幅は 4 dp、角は丸めない。色は V109 で替えている。iOS では
+      `CupertinoScrollbar` を組み、色の指定を渡さない。つまみの色は `cupertino_ui`
+      1.1.1 の既定（`scrollbar.dart` の `Color(0x59000000)`）になる
     - チップ（`FilterChip`）の既定は 2026-10-10 に確かめた
       （`generated/filter_chip_defaults_m3.g.dart`・`chip.dart`）。付けていないときは、
       ラベルが `onSurfaceVariant`、枠が `outlineVariant` で、容器の色を持たず、チップ

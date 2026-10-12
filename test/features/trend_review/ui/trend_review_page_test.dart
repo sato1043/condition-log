@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter/services.dart' show LogicalKeyboardKey, SystemChannels;
@@ -9,19 +10,22 @@ import 'package:condition_log/app/app_frame.dart';
 import 'package:condition_log/data/database.dart';
 import 'package:condition_log/data/storage_exception.dart';
 import 'package:condition_log/domain/calendar_day.dart';
+import 'package:condition_log/domain/day_start_hour.dart';
 import 'package:condition_log/features/daily_log/data/drift_daily_log_repository.dart';
 import 'package:condition_log/features/daily_log/data/drift_precaution_repository.dart';
 import 'package:condition_log/features/daily_log/domain/daily_log.dart';
 import 'package:condition_log/features/daily_log/domain/precaution.dart';
 import 'package:condition_log/features/daily_log/ui/day_record.dart';
 import 'package:condition_log/features/daily_log/ui/precaution_mark_list.dart';
+import 'package:condition_log/features/settings/settings_repository.dart';
+import 'package:condition_log/features/trend_review/ui/trend_choices_line.dart';
+import 'package:condition_log/features/trend_review/ui/trend_choices_page.dart';
 import 'package:condition_log/features/trend_review/ui/trend_day_page.dart';
 import 'package:condition_log/features/trend_review/ui/trend_review_page.dart';
 import 'package:condition_log/features/trend_review/ui/trend_rows.dart';
 import 'package:condition_log/features/visits/data/drift_visit_repository.dart';
 import 'package:condition_log/features/visits/ui/visit_page.dart';
 import 'package:condition_log/ui/choice_dialog.dart';
-import 'package:condition_log/ui/choice_field.dart';
 import 'package:condition_log/ui/note_field.dart';
 import 'package:condition_log/ui/weekend_fills.dart';
 
@@ -176,6 +180,58 @@ class _FailingVisits extends DriftVisitRepository {
   }
 }
 
+/// Stores like the app, but the hour the day starts at cannot be read while
+/// told so.
+class _FailingHour extends SettingsRepository {
+  _FailingHour(super.db);
+
+  var unreadable = true;
+
+  @override
+  Future<DayStartHour> dayStartHour() async {
+    if (unreadable) throw _unreadable();
+    return super.dayStartHour();
+  }
+}
+
+/// Stores like the app, but the hour the day starts at is told only once
+/// [told] is completed.
+class _SlowHour extends SettingsRepository {
+  _SlowHour(super.db);
+
+  final told = Completer<void>();
+
+  @override
+  Future<DayStartHour> dayStartHour() async {
+    await told.future;
+    return super.dayStartHour();
+  }
+}
+
+/// Store like the app, but a read of the visits that is held is told only
+/// once what holds it is completed.
+class _SlowVisits extends DriftVisitRepository {
+  _SlowVisits(super.db) : super(clock: DateTime.now);
+
+  Completer<void>? holdLastVisit;
+  Completer<void>? holdVisitDays;
+
+  @override
+  Future<List<CalendarDay>> visitDaysBetween(
+    CalendarDay first,
+    CalendarDay last,
+  ) async {
+    await holdVisitDays?.future;
+    return super.visitDaysBetween(first, last);
+  }
+
+  @override
+  Future<CalendarDay?> lastVisitDayBefore(CalendarDay day) async {
+    await holdLastVisit?.future;
+    return super.lastVisitDayBefore(day);
+  }
+}
+
 void main() {
   late AppDatabase db;
   late TestClock clock;
@@ -205,40 +261,100 @@ void main() {
     await openReview(tester);
   }
 
-  /// The names of the periods, as the page shows them: a name not listed
-  /// here is taken for a condition's by [choose].
-  const periods = ['前回の診察から', '1週間', '2週間', '4週間'];
+  /// What the pages say where a read failed.
+  const loadFailed = '記録を読み込めませんでした';
 
-  /// The name of the third field, whose choices [choosePrecaution] takes.
-  const precautionsField = '気を付けること';
+  /// The reads of the trend that fail, in the app [openFailingTrend] opens.
+  late Set<_Read> failing;
+  setUp(() => failing = {});
 
-  /// The field that shows [words]: its name, or what is chosen in it.
-  Finder field(String words) => find.widgetWithText(ChoiceField, words);
+  /// Opens the trend over stores whose reads in [failing] fail.
+  Future<void> openFailingTrend(WidgetTester tester) async {
+    await pumpApp(
+      tester,
+      db: db,
+      clock: clock,
+      dailyLogs: _FailingLogs(db, failing),
+      precautions: _FailingPrecautions(db, failing),
+      visits: _FailingVisits(db, failing),
+    );
+    await openReview(tester);
+  }
 
-  /// [option] among what a field offers, once the field is pressed.
-  Finder offered(String option) => find.descendant(
-    of: find.byType(ChoiceDialog),
-    matching: find.text(option),
-  );
+  /// The line above the list that tells the choices made, and what on it
+  /// shows [words].
+  final choicesLine = find.byType(TrendChoicesLine);
+  Finder onLine(String words) =>
+      find.descendant(of: choicesLine, matching: find.text(words));
 
-  /// Chooses [option] from the field that offers it: the period's or the
-  /// condition's. A precaution is chosen by [choosePrecaution].
+  /// What a screen reader reads of the line above the list.
+  String lineRead(WidgetTester tester) =>
+      tester.getSemantics(choicesLine).label;
+
+  /// What the line above the list tells as chosen, by the place of its
+  /// words: the period, without the mark that parts it from the condition
+  /// after it, the condition, and under them the precaution by its name and
+  /// manner. All of the precautions are told by the line having no word of
+  /// one, which is null here.
+  ({String period, String condition, String? precaution}) lineTells(
+    WidgetTester tester,
+  ) {
+    final words = [
+      for (final text in tester.widgetList<Text>(
+        find.descendant(of: choicesLine, matching: find.byType(Text)),
+      ))
+        text.data!,
+    ];
+    expect(words, hasLength(inInclusiveRange(2, 3)));
+    expect(words.first, endsWith('・'));
+    return (
+      period: words.first.substring(0, words.first.length - 1),
+      condition: words[1],
+      precaution: words.elementAtOrNull(2),
+    );
+  }
+
+  /// The page of the choices, and what on it shows [words].
+  final choicesPage = find.byType(TrendChoicesPage);
+  Finder onChoices(String words) =>
+      find.descendant(of: choicesPage, matching: find.text(words));
+
+  /// Opens the page of the choices from the line above the list.
+  Future<void> openChoices(WidgetTester tester) => press(tester, choicesLine);
+
+  /// Goes to the page of the choices by its location, without waiting for
+  /// what that starts: with the line to press not there, as while the
+  /// period is not worked out. The router is the frame's, which is there
+  /// whatever the trend shows.
+  void goToChoices(WidgetTester tester) =>
+      GoRouter.of(tester.element(find.byType(AppFrame)))
+          .go(TrendChoicesPage.location);
+
+  /// Chooses [option] on the page of the choices, by the words it is
+  /// offered in, and goes back to the list.
   Future<void> choose(WidgetTester tester, String option) async {
-    await press(tester, field(periods.contains(option) ? '期間' : '項目'));
-    await press(tester, offered(option));
+    await openChoices(tester);
+    await scrollTo(tester, onChoices(option));
+    await press(tester, onChoices(option));
+    await goBack(tester);
   }
 
-  /// Chooses [option], a precaution by its name and manner or all of them,
-  /// from the third field.
-  Future<void> choosePrecaution(WidgetTester tester, String option) async {
-    await press(tester, field(precautionsField));
-    await press(tester, offered(option));
-  }
+  /// What the page of the choices offers, from its top, and which of it is
+  /// chosen. Of what is laid out: a list builds only what is near the
+  /// screen, so these tell all of the choices on a screen that holds them
+  /// all, as [useTallScreen] gives.
+  Finder offered() =>
+      find.descendant(of: choicesPage, matching: find.byType(ChoiceOption));
+  List<String> offeredChoices(WidgetTester tester) => [
+    for (final option in tester.widgetList<ChoiceOption>(offered()))
+      option.label,
+  ];
+  List<String> chosenChoices(WidgetTester tester) => [
+    for (final option in tester.widgetList<ChoiceOption>(offered()))
+      if (option.chosen) option.label,
+  ];
 
-  /// Whether a field shows [option] as the one chosen.
-  bool isChosen(String option) => field(option).evaluate().isNotEmpty;
-
-  /// The foot of the line between the choices and the list.
+  /// The foot of the rule between what is above the list and the list.
   double listTop(WidgetTester tester) => tester
       .getBottomLeft(
         find
@@ -251,7 +367,8 @@ void main() {
       .dy;
 
   /// What sends the list of the days. Not the only thing on the page that
-  /// can be sent: the choices are, where the page is short of room.
+  /// can be sent: what is above the list is, where the page is short of
+  /// room.
   Finder dayList() => find
       .descendant(
         of: find.descendant(
@@ -279,6 +396,13 @@ void main() {
   Finder markOf(String label, IconData icon) =>
       find.descendant(of: rowRead(label), matching: find.byIcon(icon));
 
+  /// Half a second, frame by frame: a wait turns, and never settles.
+  Future<void> passFrames(WidgetTester tester) async {
+    for (var frame = 0; frame < 30; frame++) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+  }
+
   /// The time on the test's clock, which the waits of a test move on.
   DateTime now(WidgetTester tester) => tester.binding.clock.now();
 
@@ -304,18 +428,18 @@ void main() {
       useTallScreen(tester);
       await openTrend(tester);
 
-      expect(isChosen('2週間'), isTrue);
+      expect(lineTells(tester).period, '2週間');
       // The period that cannot be chosen is not offered.
-      await press(tester, field('期間'));
-      expect(offered('前回の診察から'), findsNothing);
+      await openChoices(tester);
+      expect(onChoices('前回の診察から'), findsNothing);
       // The one chosen is told among those offered.
       for (final (name, chosen) in [('2週間', true), ('1週間', false)]) {
         expect(
-          tester.getSemantics(offered(name)),
+          tester.getSemantics(onChoices(name)),
           isSemantics(hasCheckedState: true, isChecked: chosen),
         );
       }
-      await press(tester, find.text('キャンセル'));
+      await goBack(tester);
       expect(shownDays(tester), hasLength(14));
       expect(shownDays(tester).first, d(9, 21));
       expect(shownDays(tester).last, today);
@@ -329,7 +453,7 @@ void main() {
       useTallScreen(tester);
       await openTrend(tester);
 
-      expect(isChosen('前回の診察から'), isTrue);
+      expect(lineTells(tester).period, '前回の診察から');
       expect(shownDays(tester), hasLength(9));
       expect(shownDays(tester).first, d(9, 26));
       // One divider, above the line of the visit day.
@@ -355,8 +479,8 @@ void main() {
       await openTrend(tester);
 
       await choose(tester, '4週間');
-      expect(isChosen('4週間'), isTrue);
-      expect(isChosen('2週間'), isFalse);
+      expect(lineTells(tester).period, '4週間');
+      expect(lineTells(tester).period, isNot('2週間'));
       expect(shownDays(tester), hasLength(28));
 
       await choose(tester, '1週間');
@@ -996,16 +1120,19 @@ void main() {
       await logs.setScore(today, Condition.overall, Score(3));
       await openTrend(tester);
 
-      await press(tester, field('項目'));
+      await openChoices(tester);
       for (final name in ['全体の体調', '痛み', 'だるさ', '睡眠', '食欲', '気分']) {
-        expect(offered(name), findsOneWidget, reason: name);
+        await scrollTo(tester, onChoices(name));
+        expect(onChoices(name), findsOneWidget, reason: name);
       }
-      await press(tester, offered('睡眠'));
-      expect(isChosen('睡眠'), isTrue);
+      await scrollTo(tester, onChoices('睡眠'));
+      await press(tester, onChoices('睡眠'));
+      await goBack(tester);
+      expect(lineTells(tester).condition, '睡眠');
 
       await openRecord(tester);
       await openReview(tester);
-      expect(isChosen('睡眠'), isTrue);
+      expect(lineTells(tester).condition, '睡眠');
     });
 
     testWidgets('shows the condition chosen', (tester) async {
@@ -1013,7 +1140,7 @@ void main() {
       await logs.setScore(d(10, 2), Condition.pain, Score(1));
       useTallScreen(tester);
       await openTrend(tester);
-      expect(isChosen('全体の体調'), isTrue);
+      expect(lineTells(tester).condition, '全体の体調');
 
       await choose(tester, '痛み');
 
@@ -1215,7 +1342,7 @@ void main() {
     expect(find.text('12月'), findsNothing);
   });
 
-  testWidgets('a list shorter than its room starts under the choices', (
+  testWidgets('a list shorter than its room starts under the rule', (
     tester,
   ) async {
     await logs.setScore(today, Condition.overall, Score(3));
@@ -1224,7 +1351,7 @@ void main() {
     await choose(tester, '1週間');
 
     // The month over the oldest day's line, a list's own inset below the
-    // choices.
+    // rule.
     final first = tester.getTopLeft(rowRead('9月')).dy;
     expect(first - listTop(tester), 8);
     expect(first, lessThan(tester.getTopLeft(rowRead('9月28日（月）、未記録')).dy));
@@ -1238,7 +1365,7 @@ void main() {
     await logs.setScore(d(9, 1), Condition.overall, Score(3));
     await visits.addVisit(d(10, 2), careProviderId: null);
     await openTrend(tester);
-    expect(isChosen('前回の診察から'), isTrue);
+    expect(lineTells(tester).period, '前回の診察から');
 
     expect(shownDays(tester), [d(10, 2), d(10, 3), today]);
     expect(find.text('未記録'), findsNWidgets(3));
@@ -1254,19 +1381,14 @@ void main() {
   });
 
   group('the precaution chosen', () {
-    /// What the field offers, in its order. The dialog is closed again
-    /// with nothing chosen.
+    /// The precautions the page of the choices offers, in its order, from
+    /// all of them on. The page is left again with nothing chosen. On a
+    /// screen tall enough to lay the whole page out.
     Future<List<String>> offeredPrecautions(WidgetTester tester) async {
-      await press(tester, field(precautionsField));
-      final labels = [
-        for (final option in tester.widgetList<ChoiceOption>(
-          find.byType(ChoiceOption),
-        ))
-          option.label,
-      ];
-      Navigator.of(tester.element(find.byType(ChoiceDialog))).pop();
-      await tester.pumpAndSettle();
-      return labels;
+      await openChoices(tester);
+      final labels = offeredChoices(tester);
+      await goBack(tester);
+      return labels.sublist(labels.indexOf('すべて'));
     }
 
     /// The precautions' mark on the line read as [label].
@@ -1285,21 +1407,23 @@ void main() {
       await precautions.setPrecautionMarked(d(8, 1), late.id, marked: true);
       await precautions.setPrecautionInUse(snack.id, inUse: false);
       await precautions.setPrecautionInUse(late.id, inUse: false);
+      useTallScreen(tester);
       await openTrend(tester);
 
-      expect(isChosen('すべて'), isTrue);
+      expect(lineTells(tester).precaution, isNull);
       expect(await offeredPrecautions(tester), [
         'すべて',
         '入浴　控える',
         '散歩　続ける',
         '間食　控える',
       ]);
-      // Closed with nothing chosen, the choice stays.
-      expect(isChosen('すべて'), isTrue);
+      // Left with nothing chosen, the choice stays.
+      expect(lineTells(tester).precaution, isNull);
     });
 
     testWidgets('is all alone with no precaution and no mark', (tester) async {
       await logs.setScore(today, Condition.overall, Score(3));
+      useTallScreen(tester);
       await openTrend(tester);
 
       expect(await offeredPrecautions(tester), ['すべて']);
@@ -1328,8 +1452,8 @@ void main() {
       expect(managedOn('$both$marked$withMemo'), findsOneWidget);
       final days = shownDays(tester);
 
-      await choosePrecaution(tester, '散歩　続ける');
-      expect(isChosen('散歩　続ける'), isTrue);
+      await choose(tester, '散歩　続ける');
+      expect(lineTells(tester).precaution, '散歩　続ける');
       // The day of the other's mark alone has no mark, and is not read as
       // having one.
       expect(rowRead(bathOnly), findsOneWidget);
@@ -1352,12 +1476,12 @@ void main() {
         findsOneWidget,
       );
 
-      await choosePrecaution(tester, '入浴　控える');
+      await choose(tester, '入浴　控える');
       expect(managedOn('$bathOnly$marked'), findsOneWidget);
       expect(managedOn('$both$marked$withMemo'), findsOneWidget);
 
-      await choosePrecaution(tester, 'すべて');
-      expect(isChosen('すべて'), isTrue);
+      await choose(tester, 'すべて');
+      expect(lineTells(tester).precaution, isNull);
       expect(find.byIcon(Icons.checklist), findsNWidgets(2));
     });
 
@@ -1371,20 +1495,20 @@ void main() {
 
       expect(await offeredPrecautions(tester), ['すべて', '間食　控える', '間食　続ける']);
 
-      await choosePrecaution(tester, '間食　続ける');
+      await choose(tester, '間食　続ける');
       expect(managedOn('10月2日（金）、未記録、気を付けることの印あり'), findsOneWidget);
       expect(rowRead('10月1日（木）、未記録'), findsOneWidget);
       expect(find.byIcon(Icons.checklist), findsOneWidget);
 
       // The one chosen is told among those offered, and it alone.
-      await press(tester, field(precautionsField));
+      await openChoices(tester);
       for (final (option, chosen) in [
         ('すべて', false),
         ('間食　控える', false),
         ('間食　続ける', true),
       ]) {
         expect(
-          tester.getSemantics(offered(option)),
+          tester.getSemantics(onChoices(option)),
           isSemantics(hasCheckedState: true, isChecked: chosen),
           reason: option,
         );
@@ -1403,51 +1527,222 @@ void main() {
       await precautions.setPrecautionInUse(snack.id, inUse: false);
       useTallScreen(tester);
       await openTrend(tester);
-      expect(isChosen('2週間'), isTrue);
+      expect(lineTells(tester).period, '2週間');
       expect(await offeredPrecautions(tester), ['すべて', '入浴　控える']);
 
       await choose(tester, '4週間');
-      await choosePrecaution(tester, '間食　控える');
-      expect(isChosen('間食　控える'), isTrue);
+      await choose(tester, '間食　控える');
+      expect(lineTells(tester).precaution, '間食　控える');
       expect(managedOn('9月10日（木）、未記録、気を付けることの印あり'), findsOneWidget);
       expect(find.byIcon(Icons.checklist), findsOneWidget);
 
       await openRecord(tester);
       await openReview(tester);
-      expect(isChosen('間食　控える'), isTrue);
+      expect(lineTells(tester).precaution, '間食　控える');
 
       // Not offered in two weeks: all of them count, and their marks show.
       await choose(tester, '2週間');
-      expect(isChosen('すべて'), isTrue);
+      expect(lineTells(tester).precaution, isNull);
       expect(managedOn('10月2日（金）、未記録、気を付けることの印あり'), findsOneWidget);
 
       await choose(tester, '4週間');
-      expect(isChosen('間食　控える'), isTrue);
+      expect(lineTells(tester).precaution, '間食　控える');
       expect(find.byIcon(Icons.checklist), findsOneWidget);
     });
   });
 
-  group('where the choices leave the list no room', () {
-    /// A visit before today: the period's field holds its longest words.
-    Future<void> openTrendWithVisit(WidgetTester tester) async {
+  group('the line that tells the choices', () {
+    const longName = '寝る前の長いスマートフォン';
+
+    /// A visit before today, so the period is the one of the longest
+    /// words, and a precaution of a long name to choose.
+    Future<void> openTrendWithLongWords(WidgetTester tester) async {
       await visits.addVisit(d(9, 26), careProviderId: null);
+      await precautions.addToRefrain(longName);
       await logs.setScore(today, Condition.overall, Score(2));
       await openTrend(tester);
     }
 
-    final choices = find.descendant(
+    /// What is above the list: the line and the words of the boxes' ends,
+    /// which are sent only where the page is short of room for them.
+    final aboveList = find.descendant(
       of: find.byType(TrendReviewPage),
       matching: find.byType(SingleChildScrollView),
     );
+    ScrollPosition sentAboveList(WidgetTester tester) => tester
+        .state<ScrollableState>(
+          find.descendant(of: aboveList, matching: find.byType(Scrollable)),
+        )
+        .position;
+
+    /// The room the page has under its header, and that the list has of it.
+    /// The page's: what it is given to lay out in, which is the first of
+    /// the page that asks how much it is given.
+    double pageRoom(WidgetTester tester) => tester
+        .getSize(
+          find
+              .descendant(
+                of: find.byType(TrendReviewPage),
+                matching: find.byType(LayoutBuilder),
+              )
+              .first,
+        )
+        .height;
+    double listRoom(WidgetTester tester) => tester
+        .getSize(
+          find.ancestor(of: dayList(), matching: find.byType(Align)).first,
+        )
+        .height;
+
+    /// What the list keeps where the page is short of room: a line as tall
+    /// as a thing to press at [scale], and the room over and under its
+    /// lines.
+    double listKeeps(double scale) => 16 + scale * kMinInteractiveDimension;
+
+    testWidgets('tells the period and the condition, and the precaution '
+        'only while one is chosen, and reads each by its name', (tester) async {
+      await precautions.addToRefrain('間食');
+      await logs.setScore(today, Condition.overall, Score(3));
+      useTallScreen(tester);
+      await openTrend(tester);
+
+      expect(onLine('2週間・'), findsOneWidget);
+      expect(onLine('全体の体調'), findsOneWidget);
+      expect(
+        find.descendant(of: choicesLine, matching: find.byType(Text)),
+        findsNWidgets(2),
+      );
+      expect(
+        tester.getSemantics(choicesLine),
+        isSemantics(
+          label: '期間 2週間、項目 全体の体調',
+          isButton: true,
+          hasTapAction: true,
+        ),
+      );
+      // One node: its words and its press are not there a second time
+      // under it, for a screen reader to stop at again.
+      expect(tester.getSemantics(choicesLine).childrenCount, 0);
+      // The mark of a press is drawn on a material inside what is sent, so
+      // it is cut where the line is, and not laid over the list.
+      expect(
+        find.descendant(
+          of: aboveList,
+          matching: find.ancestor(
+            of: choicesLine,
+            matching: find.byType(Material),
+          ),
+        ),
+        findsOneWidget,
+      );
+      // A mark that it sets what is shown, and one that it leads on.
+      for (final icon in [Icons.tune, Icons.chevron_right]) {
+        expect(
+          find.descendant(of: choicesLine, matching: find.byIcon(icon)),
+          findsOneWidget,
+        );
+      }
+      expect(
+        tester.getSize(choicesLine).height,
+        greaterThanOrEqualTo(kMinInteractiveDimension),
+      );
+
+      await choose(tester, '間食　控える');
+      expect(lineRead(tester), '期間 2週間、項目 全体の体調、気を付けること 間食　控える');
+      // Under the period and the condition.
+      expect(
+        tester.getRect(onLine('間食　控える')).top,
+        greaterThanOrEqualTo(tester.getRect(onLine('全体の体調')).bottom),
+      );
+
+      await choose(tester, '痛み');
+      await choose(tester, 'すべて');
+      expect(lineTells(tester).precaution, isNull);
+      expect(lineRead(tester), '期間 2週間、項目 痛み');
+    });
+
+    testWidgets('is not made again, nor is the list, as the room of the page '
+        'changes', (tester) async {
+      await logs.setScore(today, Condition.overall, Score(3));
+      useSmallPhone(tester);
+      await openTrend(tester);
+      final list = find.ancestor(of: dayList(), matching: find.byType(Align));
+      final line = tester.widget(choicesLine);
+      final lines = tester.widget(list.first);
+      final room = pageRoom(tester);
+
+      // As the destinations do in each frame of their fold: the page is
+      // laid out in other room, and what it shows is as it was made.
+      tester.view.physicalSize =
+          (smallPhone + const Offset(0, 68)) * smallPhonePixelRatio;
+      await tester.pump();
+      expect(pageRoom(tester), room + 68);
+      expect(tester.widget(choicesLine), same(line));
+      expect(tester.widget(list.first), same(lines));
+    });
+
+    testWidgets('opens the page of the choices by a screen reader\'s press '
+        'too', (tester) async {
+      await logs.setScore(today, Condition.overall, Score(3));
+      await openTrend(tester);
+
+      tester.semantics.tap(find.semantics.byLabel('期間 2週間、項目 全体の体調'));
+      await tester.pumpAndSettle();
+      expect(choicesPage, findsOneWidget);
+    });
+
+    testWidgets('opens the page of the choices, and the list is where it '
+        'was sent to once gone back to', (tester) async {
+      await logs.setScore(today, Condition.overall, Score(3));
+      await openTrend(tester);
+      await choose(tester, '4週間');
+      double sent() => tester.state<ScrollableState>(dayList()).position.pixels;
+
+      await tester.drag(find.byType(TrendDayRow).first, const Offset(0, 300));
+      await tester.pumpAndSettle();
+      final place = sent();
+      expect(place, greaterThan(0));
+
+      await openChoices(tester);
+      expect(choicesPage, findsOneWidget);
+      await goBack(tester);
+
+      expect(headerTitle('経過'), findsOneWidget);
+      expect(sent(), place);
+    });
+
+    testWidgets('sets the condition under the period where one line cannot '
+        'hold both, and keeps each of its words to one line', (tester) async {
+      useSmallPhone(tester);
+      await openTrendWithLongWords(tester);
+      await choose(tester, '$longName　控える');
+      Rect period() => tester.getRect(onLine('前回の診察から・'));
+      Rect condition() => tester.getRect(onLine('全体の体調'));
+      Rect precaution() => tester.getRect(onLine('$longName　控える'));
+
+      // On one line, the condition after the period.
+      expect(condition().top, period().top);
+      expect(condition().left, greaterThanOrEqualTo(period().right));
+      // The long name is cut short: as tall as the others, not wrapped.
+      expect(precaution().height, condition().height);
+      // Read in full all the same.
+      expect(lineRead(tester), '期間 前回の診察から、項目 全体の体調、気を付けること $longName　控える');
+
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(condition().top, greaterThanOrEqualTo(period().bottom));
+      expect(period().height, condition().height);
+      expect(precaution().height, condition().height);
+    });
 
     testWidgets('on a screen turned on its side, nothing overflows, a line '
-        'shows whole, and the choices are sent to reach the last of them', (
+        'of the list shows whole, and what is above the list is not sent', (
       tester,
     ) async {
-      tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = smallPhone.flipped;
-      addTearDown(tester.view.reset);
-      await openTrendWithVisit(tester);
+      useScreenOnItsSide(tester);
+      await openTrendWithLongWords(tester);
+      await choose(tester, '$longName　控える');
       expect(tester.takeException(), isNull);
 
       expect(
@@ -1458,29 +1753,121 @@ void main() {
         tester.getBottomLeft(todaysLine).dy,
         lessThanOrEqualTo(tester.getTopLeft(find.byType(NavigationBar)).dy),
       );
-
-      // The last choice is under the rule until the choices are sent.
-      expect(field(precautionsField).hitTestable(), findsNothing);
-      await tester.drag(choices, const Offset(0, -300));
-      await tester.pumpAndSettle();
-      await press(tester, field(precautionsField));
-      expect(find.byType(ChoiceDialog), findsOneWidget);
+      expect(sentAboveList(tester).maxScrollExtent, 0);
+      expect(listRoom(tester), greaterThanOrEqualTo(listKeeps(1)));
     });
 
-    testWidgets('with room for them all, the choices are not sent', (
-      tester,
-    ) async {
-      useSmallPhone(tester);
-      await openTrendWithVisit(tester);
+    for (final MapEntry(key: platform, value: scale) in maxTextScales.entries) {
+      testWidgets(
+        'at the largest text, with room for it all, what is above the list '
+        'is not sent on $platform',
+        (tester) async {
+          useSmallPhone(tester, textScale: scale);
+          await openTrendWithLongWords(tester);
+          await choose(tester, '$longName　控える');
+          expect(tester.takeException(), isNull);
 
-      final position = tester
-          .state<ScrollableState>(
-            find.descendant(of: choices, matching: find.byType(Scrollable)),
-          )
-          .position;
-      expect(position.maxScrollExtent, 0);
-      expect(field(precautionsField).hitTestable(), findsOneWidget);
-    });
+          expect(sentAboveList(tester).maxScrollExtent, 0);
+          expect(listRoom(tester), greaterThanOrEqualTo(listKeeps(scale)));
+        },
+        variant: TargetPlatformVariant.only(platform),
+      );
+
+      testWidgets('at the largest text on a screen turned on its side, nothing '
+          'overflows, the list keeps the room of a line, and the line of the '
+          'choices is pressed where it shows on $platform', (tester) async {
+        useScreenOnItsSide(tester);
+        await openTrendWithLongWords(tester);
+        await choose(tester, '$longName　控える');
+        tester.platformDispatcher.textScaleFactorTestValue = scale;
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+
+        // Short of room for what is above it, the list has that of a
+        // line to press and no more: the rest of what is above is sent.
+        expect(sentAboveList(tester).maxScrollExtent, greaterThan(0));
+        // Of the page's room, the rule over the list takes its height.
+        const ruleHeight = 1;
+        expect(
+          listRoom(tester),
+          moreOrLessEquals(
+            math.min(listKeeps(scale), pageRoom(tester) - ruleHeight),
+            epsilon: 0.01,
+          ),
+        );
+
+        // The words of the boxes' ends are under the rule until what is
+        // above the list is sent, and above it once it is.
+        Rect ends() => tester.getRect(find.byType(TrendScaleEnds));
+        expect(ends().bottom, greaterThan(listTop(tester)));
+        // Sent more than once, where there is more to send than one does.
+        Future<void> sendAboveList(
+          double by, {
+          required bool Function() until,
+        }) async {
+          for (var sends = 0; sends < 5 && !until(); sends++) {
+            await tester.drag(aboveList, Offset(0, by));
+            await tester.pumpAndSettle();
+          }
+          expect(until(), isTrue, reason: 'not there after 5 sends by $by');
+        }
+
+        // The frame folds the destinations away only for what can be sent
+        // further than the room they give back. What is above the list has
+        // that much to send at the largest text of iOS alone: there this
+        // tells that the frame is kept from what is sent, and on Android
+        // the frame would leave the destinations whatever it was told.
+        expect(
+          sentAboveList(tester).maxScrollExtent >
+              tester.getSize(find.byType(NavigationBar)).height,
+          platform == TargetPlatform.iOS,
+          reason: '${sentAboveList(tester).maxScrollExtent} to send',
+        );
+        await sendAboveList(-200, until: () => ends().bottom < listTop(tester));
+        // The list is what folds the destinations away: sent, what is above
+        // it leaves them, and so keeps the room it is sent in.
+        expect(find.byType(NavigationBar), findsOneWidget);
+        await sendAboveList(
+          200,
+          until: () => sentAboveList(tester).pixels == 0,
+        );
+        expect(tester.takeException(), isNull);
+
+        await tester.tapAt(
+          tester.getRect(choicesLine).topCenter + const Offset(0, 8),
+        );
+        await tester.pumpAndSettle();
+        expect(choicesPage, findsOneWidget);
+        expect(tester.takeException(), isNull);
+      }, variant: TargetPlatformVariant.only(platform));
+
+      testWidgets('at the largest text on a screen turned on its side, the '
+          'destinations fold away as the list is sent on and stay away, '
+          'though what is above the list is at its top on $platform', (
+        tester,
+      ) async {
+        useScreenOnItsSide(tester);
+        await openTrendWithLongWords(tester);
+        await choose(tester, '$longName　控える');
+        tester.platformDispatcher.textScaleFactorTestValue = scale;
+        await tester.pumpAndSettle();
+        // Sent within its own room, which grows as the destinations go. It
+        // tells of itself at its top as its room changes, however little
+        // there is to send, and the frame is kept from that.
+        expect(sentAboveList(tester).maxScrollExtent, greaterThan(0));
+        expect(sentAboveList(tester).pixels, 0);
+        expect(find.byType(NavigationBar), findsOneWidget);
+
+        await tester.drag(
+          find.byType(TrendDayRow).hitTestable().first,
+          const Offset(0, 200),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(NavigationBar), findsNothing);
+        expect(sentAboveList(tester).pixels, 0);
+        expect(tester.takeException(), isNull);
+      }, variant: TargetPlatformVariant.only(platform));
+    }
   });
 
   group('the day\'s page', () {
@@ -1771,10 +2158,7 @@ void main() {
         );
 
         await tester.tap(find.text('2 金'));
-        // Frame by frame: the wait turns, and never settles.
-        for (var frame = 0; frame < 30; frame++) {
-          await tester.pump(const Duration(milliseconds: 16));
-        }
+        await passFrames(tester);
         expect(onPage(find.byType(ListView)), findsOneWidget);
         expect(wait, findsOneWidget);
         expect(onPage(find.text('項目1')), findsNothing);
@@ -2125,9 +2509,9 @@ void main() {
       await goBack(tester);
       await openReview(tester);
 
-      await press(tester, field(precautionsField));
-      expect(offered('長湯　控える'), findsOneWidget);
-      expect(offered('入浴　控える'), findsNothing);
+      await openChoices(tester);
+      expect(onChoices('長湯　控える'), findsOneWidget);
+      expect(onChoices('入浴　控える'), findsNothing);
     });
 
     testWidgets('to the visits moves the divider and the period', (
@@ -2182,7 +2566,7 @@ void main() {
       await tester.runAsync(() => visits.deleteVisit(later));
       await tester.pumpAndSettle();
       await openReview(tester);
-      expect(isChosen('前回の診察から'), isTrue);
+      expect(lineTells(tester).period, '前回の診察から');
       expect(shownDays(tester).first, d(9, 12));
       expect(rowRead('診察日、9月26日（土）'), findsNothing);
       expect(rowRead('診察日、9月12日（土）'), findsOneWidget);
@@ -2192,31 +2576,13 @@ void main() {
       await tester.runAsync(() => visits.deleteVisit(earlier));
       await tester.pumpAndSettle();
       await openReview(tester);
-      expect(isChosen('2週間'), isTrue);
+      expect(lineTells(tester).period, '2週間');
       expect(shownDays(tester), hasLength(14));
       expect(find.byType(TrendVisitDivider), findsNothing);
     });
   });
 
   group('when the records cannot be read', () {
-    const loadFailed = '記録を読み込めませんでした';
-
-    late Set<_Read> failing;
-
-    setUp(() => failing = {});
-
-    Future<void> openFailingTrend(WidgetTester tester) async {
-      await pumpApp(
-        tester,
-        db: db,
-        clock: clock,
-        dailyLogs: _FailingLogs(db, failing),
-        precautions: _FailingPrecautions(db, failing),
-        visits: _FailingVisits(db, failing),
-      );
-      await openReview(tester);
-    }
-
     Future<void> loadAgain(WidgetTester tester) async {
       failing.clear();
       await press(tester, find.text('読み込み直す'));
@@ -2236,10 +2602,18 @@ void main() {
         expect(find.text(loadFailed), findsOneWidget);
         expect(find.byType(TrendDayRow), findsNothing);
         expect(now(tester).difference(opened), lessThan(atOnce));
+        // The line of the choices tells the period shown, so it is not
+        // there while that cannot be worked out; with the records alone
+        // unread it is, to choose another period by.
+        expect(
+          choicesLine,
+          read == _Read.lastVisit ? findsNothing : findsOneWidget,
+        );
 
         await loadAgain(tester);
         expect(find.text(loadFailed), findsNothing);
         expect(shownDays(tester), hasLength(9));
+        expect(lineTells(tester).period, '前回の診察から');
       });
     }
 
@@ -2265,6 +2639,80 @@ void main() {
       expect(shownDays(tester), hasLength(7));
       expect(find.byType(TrendScaleEnds), findsOneWidget);
     });
+
+    // A read that fails after one that ended well keeps what that one
+    // read, beside the failure.
+    testWidgets('a period that cannot be worked out again is not told as '
+        'the one worked out before it', (tester) async {
+      await precautions.addToRefrain('間食');
+      await logs.setScore(today, Condition.overall, Score(3));
+      useTallScreen(tester);
+      await openFailingTrend(tester);
+      await choose(tester, '間食　控える');
+      expect(lineRead(tester), '期間 2週間、項目 全体の体調、気を付けること 間食　控える');
+
+      failing.add(_Read.lastVisit);
+      await openChoices(tester);
+      await press(tester, onChoices('1週間'));
+      expect(onChoices(loadFailed), findsOneWidget);
+      await goBack(tester);
+      expect(find.text(loadFailed), findsOneWidget);
+      expect(choicesLine, findsNothing);
+
+      await loadAgain(tester);
+      expect(lineRead(tester), '期間 1週間、項目 全体の体調、気を付けること 間食　控える');
+    });
+
+    testWidgets('records that cannot be read again tell no precaution on '
+        'the line, which tells the period chosen', (tester) async {
+      await precautions.addToRefrain('間食');
+      await logs.setScore(today, Condition.overall, Score(3));
+      useTallScreen(tester);
+      await openFailingTrend(tester);
+      await choose(tester, '間食　控える');
+
+      failing.add(_Read.logs);
+      await choose(tester, '1週間');
+      expect(find.text(loadFailed), findsOneWidget);
+      expect(lineRead(tester), '期間 1週間、項目 全体の体調');
+
+      await loadAgain(tester);
+      expect(lineRead(tester), '期間 1週間、項目 全体の体調、気を付けること 間食　控える');
+    });
+
+    for (final MapEntry(key: platform, value: scale) in maxTextScales.entries) {
+      for (final read in [_Read.lastVisit, _Read.logs]) {
+        for (final onItsSide in [false, true]) {
+          testWidgets(
+            'at the largest text${onItsSide ? ' on a screen turned on its '
+                      'side' : ''}, nothing overflows when the ${read.name} '
+            'fail, and the button to read again is reached on $platform',
+            (tester) async {
+              await logs.setScore(today, Condition.overall, Score(3));
+              failing.add(read);
+              if (onItsSide) {
+                useScreenOnItsSide(tester);
+              } else {
+                useSmallPhone(tester);
+              }
+              await openFailingTrend(tester);
+              tester.platformDispatcher.textScaleFactorTestValue = scale;
+              await tester.pumpAndSettle();
+              expect(tester.takeException(), isNull);
+              expect(find.text(loadFailed), findsOneWidget);
+
+              await tester.ensureVisible(find.text('読み込み直す'));
+              await tester.pumpAndSettle();
+              await loadAgain(tester);
+              expect(tester.takeException(), isNull);
+              expect(find.text(loadFailed), findsNothing);
+              expect(find.byType(TrendDayRow), findsWidgets);
+            },
+            variant: TargetPlatformVariant.only(platform),
+          );
+        }
+      }
+    }
   });
 
   testWidgets('the period is not asked for again as the screen is rebuilt', (
@@ -2279,10 +2727,14 @@ void main() {
     // Sent toward the older days, the list folds the destinations away and
     // is laid out again, taller, in each frame of the fold.
     expect(find.byType(NavigationBar), findsOneWidget);
+    final line = tester.widget(lineOn(d(10, 1)));
     await tester.drag(find.byType(TrendDayRow).first, const Offset(0, 200));
     await tester.pumpAndSettle();
     expect(find.byType(NavigationBar), findsNothing);
     expect(counting.watches, 1);
+    // Nor are the lines made again: the page is laid out in each frame of
+    // the fold with the list it had.
+    expect(tester.widget(lineOn(d(10, 1))), same(line));
     await tester.drag(
       find.byType(TrendDayRow).hitTestable().first,
       const Offset(0, -400),
@@ -2343,6 +2795,470 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  group('the page of the choices', () {
+    const conditions = ['全体の体調', '痛み', 'だるさ', '睡眠', '食欲', '気分'];
+
+    // With no notch as well: the room a heading keeps at its start is the
+    // one a choice does by Material's default, and under a notch wider than
+    // both, the two start together whatever each keeps.
+    for (final notch in [0.0, 40.0]) {
+      testWidgets('on a screen turned on its side, with the camera\'s notch '
+          'taking $notch at its start, a heading starts where the choices '
+          'under it do', (tester) async {
+        useScreenOnItsSide(tester, notch: notch);
+        await openTrend(tester);
+        await openChoices(tester);
+
+        final heading = tester.getTopLeft(onChoices('期間')).dx;
+        expect(heading, math.max(notch, 16));
+        expect(tester.getTopLeft(onChoices('1週間')).dx, heading);
+      });
+    }
+
+    // What the page's scrollbar draws, asked of its painter alone: the
+    // choices under it draw shapes of their own.
+    void Function(Canvas) scrollbarOf(WidgetTester tester) {
+      final drawn = find.descendant(
+        of: find.descendant(of: choicesPage, matching: find.byType(Scrollbar)),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is CustomPaint &&
+              widget.foregroundPainter is ScrollbarPainter,
+        ),
+      );
+      final painter = tester.widget<CustomPaint>(drawn).foregroundPainter!;
+      final size = tester.getSize(drawn);
+      return (canvas) => painter.paint(canvas, size);
+    }
+
+    testWidgets('where the choices go on below the screen, a thumb tells so '
+        'before anything is sent, and none is drawn where all of them '
+        'fit', (tester) async {
+      useSmallPhone(tester);
+      await openTrend(tester);
+      await openChoices(tester);
+      expect(onChoices('すべて').hitTestable(), findsNothing);
+      expect(
+        scrollbarOf(tester),
+        paints..something(
+          (method, _) => method == #drawRect || method == #drawRRect,
+        ),
+      );
+
+      await goBack(tester);
+      useTallScreen(tester);
+      await tester.pumpAndSettle();
+      await openChoices(tester);
+      expect(onChoices('すべて').hitTestable(), findsOneWidget);
+      expect(scrollbarOf(tester), paintsNothing);
+    }, variant: bothSystems);
+
+    testWidgets('the thumb is drawn in the color of the rules between the '
+        'parts, which keeps the non-text minimum on the ground; on iOS, where '
+        'the theme does not reach, in the system\'s own', (tester) async {
+      useSmallPhone(tester);
+      await openTrend(tester);
+      await openChoices(tester);
+
+      // The track is drawn too, in no color.
+      final drawn = <int>{};
+      expect(
+        scrollbarOf(tester),
+        paints..everything((method, arguments) {
+          if (method == #drawRect || method == #drawRRect) {
+            final color = (arguments[1] as Paint).color;
+            if (color.a > 0) drawn.add(color.toARGB32());
+          }
+          return true;
+        }),
+      );
+
+      final theme = Theme.of(tester.element(choicesPage));
+      final colors = theme.colorScheme;
+      final iOS = theme.platform == TargetPlatform.iOS;
+      final thumb = iOS ? const Color(0x59000000) : colors.outlineVariant;
+      expect(drawn, {thumb.toARGB32()});
+      expect(
+        contrastRatio(Color.alphaBlend(thumb, colors.surface), colors.surface),
+        closeTo(iOS ? 2.38 : 4.50, 0.005),
+      );
+    }, variant: bothSystems);
+
+    testWidgets('lies below the trend without the destinations, offers the '
+        'three under their headings with the one chosen told, and goes back '
+        'to the list', (tester) async {
+      await visits.addVisit(d(9, 26), careProviderId: null);
+      await precautions.addToRefrain('間食');
+      await precautions.addToKeepUp('散歩');
+      await logs.setScore(today, Condition.overall, Score(3));
+      useTallScreen(tester);
+      await openTrend(tester);
+      await openChoices(tester);
+
+      expect(headerTitle('経過の表示条件'), findsOneWidget);
+      expect(find.byType(NavigationBar), findsNothing);
+      // Where the page is, in words of its own: nothing of what is chosen,
+      // or of a name the person wrote, is carried in it.
+      expect(
+        GoRouterState.of(tester.element(choicesPage)).uri.toString(),
+        '/review/choices',
+      );
+      expect(offeredChoices(tester), [
+        '前回の診察から',
+        '1週間',
+        '2週間',
+        '4週間',
+        ...conditions,
+        'すべて',
+        '間食　控える',
+        '散歩　続ける',
+      ]);
+      expect(chosenChoices(tester), ['前回の診察から', '全体の体調', 'すべて']);
+
+      // Each is told as one of a group of which one is chosen.
+      for (final (name, chosen) in [
+        ('前回の診察から', true),
+        ('1週間', false),
+        ('痛み', false),
+        ('すべて', true),
+        ('間食　控える', false),
+      ]) {
+        expect(
+          tester.getSemantics(onChoices(name)),
+          isSemantics(
+            label: name,
+            hasCheckedState: true,
+            isChecked: chosen,
+            isInMutuallyExclusiveGroup: true,
+            hasTapAction: true,
+          ),
+          reason: name,
+        );
+      }
+
+      // Each part under a heading, the second and the third under a rule.
+      const headings = ['期間', '項目', '気を付けること'];
+      for (final name in headings) {
+        final heading = tester.getSemantics(onChoices(name));
+        expect(heading, isSemantics(label: name, isHeader: true), reason: name);
+        expect(heading.getSemanticsData().headingLevel, 2, reason: name);
+      }
+      final rules = find.descendant(
+        of: choicesPage,
+        matching: find.byType(Divider),
+      );
+      expect(rules, findsNWidgets(2));
+      for (final (place, last) in ['4週間', '気分'].indexed) {
+        final rule = tester.getRect(rules.at(place));
+        expect(
+          rule.top,
+          greaterThanOrEqualTo(tester.getRect(onChoices(last)).bottom),
+        );
+        expect(
+          rule.bottom,
+          lessThanOrEqualTo(tester.getRect(onChoices(headings[place + 1])).top),
+        );
+      }
+
+      await goBack(tester);
+      expect(headerTitle('経過'), findsOneWidget);
+      expect(find.byType(NavigationBar), findsOneWidget);
+    });
+
+    testWidgets('does not offer since the last visit with no visit before '
+        'today, and offers all of them alone with no precaution', (
+      tester,
+    ) async {
+      await logs.setScore(today, Condition.overall, Score(3));
+      useTallScreen(tester);
+      await openTrend(tester);
+      await openChoices(tester);
+
+      expect(offeredChoices(tester), [
+        '1週間',
+        '2週間',
+        '4週間',
+        ...conditions,
+        'すべて',
+      ]);
+      expect(chosenChoices(tester), ['2週間', '全体の体調', 'すべて']);
+    });
+
+    testWidgets('a choice holds from the press with the page left open, and '
+        'the list shows it once gone back to', (tester) async {
+      await precautions.addToRefrain('間食');
+      await logs.setScore(today, Condition.sleep, Score(4));
+      useTallScreen(tester);
+      await openTrend(tester);
+      expect(shownDays(tester), hasLength(14));
+      await openChoices(tester);
+
+      for (final option in ['4週間', '睡眠', '間食　控える']) {
+        await press(tester, onChoices(option));
+        expect(headerTitle('経過の表示条件'), findsOneWidget, reason: option);
+      }
+      expect(chosenChoices(tester), ['4週間', '睡眠', '間食　控える']);
+      // Nothing confirms a choice, and nothing takes one back.
+      expect(
+        find.descendant(
+          of: find.descendant(of: choicesPage, matching: find.byType(ListView)),
+          matching: find.bySubtype<ButtonStyleButton>(),
+        ),
+        findsNothing,
+      );
+
+      await goBack(tester);
+      expect(shownDays(tester), hasLength(28));
+      expect(tester.widget<TrendDayRow>(todaysLine).condition, Condition.sleep);
+
+      // Opened again, the page tells what was chosen.
+      await openChoices(tester);
+      expect(chosenChoices(tester), ['4週間', '睡眠', '間食　控える']);
+    });
+
+    testWidgets('offers the precautions of the period chosen, takes one '
+        'that period does not offer for all of them, and holds it again in '
+        'a period that does', (tester) async {
+      // Out of use, it is offered only where it holds a mark.
+      final bath = await precautions.addToRefrain('入浴');
+      await precautions.setPrecautionMarked(d(9, 14), bath.id, marked: true);
+      await precautions.setPrecautionInUse(bath.id, inUse: false);
+      await logs.setScore(today, Condition.overall, Score(3));
+      useTallScreen(tester);
+      await openTrend(tester);
+      await openChoices(tester);
+      expect(onChoices('入浴　控える'), findsNothing);
+
+      await press(tester, onChoices('4週間'));
+      await press(tester, onChoices('入浴　控える'));
+      expect(chosenChoices(tester), ['4週間', '全体の体調', '入浴　控える']);
+
+      await press(tester, onChoices('1週間'));
+      expect(onChoices('入浴　控える'), findsNothing);
+      expect(chosenChoices(tester), ['1週間', '全体の体調', 'すべて']);
+
+      await press(tester, onChoices('4週間'));
+      expect(chosenChoices(tester), ['4週間', '全体の体調', '入浴　控える']);
+    });
+
+    // The page is reached from the line, which is there once the period is
+    // worked out. Reached by its location before that, as when the app is
+    // brought back on it, it waits as the list does.
+    group('while a read has not ended', () {
+      final wait = find.descendant(
+        of: choicesPage,
+        matching: find.byType(CircularProgressIndicator),
+      );
+
+      Future<void> openWaitingChoices(WidgetTester tester) async {
+        await tester.tap(
+          find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.text('経過'),
+          ),
+        );
+        await passFrames(tester);
+        goToChoices(tester);
+        await passFrames(tester);
+      }
+
+      testWidgets('offers nothing until the hour the day starts at is read', (
+        tester,
+      ) async {
+        final hour = _SlowHour(db);
+        useTallScreen(tester);
+        await pumpApp(
+          tester,
+          db: db,
+          clock: clock,
+          settings: hour,
+          settled: false,
+        );
+        await openWaitingChoices(tester);
+
+        expect(headerTitle('経過の表示条件'), findsOneWidget);
+        expect(wait, findsOneWidget);
+        expect(offered(), findsNothing);
+
+        hour.told.complete();
+        await tester.pumpAndSettle();
+        expect(wait, findsNothing);
+        expect(chosenChoices(tester), ['2週間', '全体の体調', 'すべて']);
+      });
+
+      testWidgets('offers nothing until the period is worked out', (
+        tester,
+      ) async {
+        await visits.addVisit(d(9, 26), careProviderId: null);
+        final slow = _SlowVisits(db)..holdLastVisit = Completer();
+        useTallScreen(tester);
+        await pumpApp(tester, db: db, clock: clock, visits: slow);
+        await openWaitingChoices(tester);
+
+        expect(wait, findsOneWidget);
+        expect(offered(), findsNothing);
+
+        slow.holdLastVisit!.complete();
+        await tester.pumpAndSettle();
+        expect(wait, findsNothing);
+        expect(chosenChoices(tester), ['前回の診察から', '全体の体調', 'すべて']);
+      });
+
+      testWidgets('offers the periods, the conditions and all of the '
+          'precautions until the records are read, and each precaution once '
+          'they are', (tester) async {
+        await precautions.addToRefrain('間食');
+        final slow = _SlowVisits(db)..holdVisitDays = Completer();
+        useTallScreen(tester);
+        await pumpApp(tester, db: db, clock: clock, visits: slow);
+        await openWaitingChoices(tester);
+
+        const first = ['1週間', '2週間', '4週間', ...conditions, 'すべて'];
+        expect(wait, findsNothing);
+        expect(offeredChoices(tester), first);
+        expect(chosenChoices(tester), ['2週間', '全体の体調', 'すべて']);
+
+        slow.holdVisitDays!.complete();
+        await tester.pumpAndSettle();
+        expect(offeredChoices(tester), [...first, '間食　控える']);
+      });
+    });
+
+    group('when a read fails', () {
+      Future<void> openFailingChoices(WidgetTester tester) async {
+        await openFailingTrend(tester);
+        // By its location: the line to press is not there while the period
+        // cannot be worked out.
+        goToChoices(tester);
+        await tester.pumpAndSettle();
+      }
+
+      Future<void> loadAgain(WidgetTester tester) async {
+        failing.clear();
+        await press(tester, onChoices('読み込み直す'));
+      }
+
+      testWidgets('says so in place of the choices when the period cannot '
+          'be worked out, and reads it again', (tester) async {
+        failing.add(_Read.lastVisit);
+        useTallScreen(tester);
+        await openFailingChoices(tester);
+
+        expect(onChoices(loadFailed), findsOneWidget);
+        expect(offered(), findsNothing);
+
+        await loadAgain(tester);
+        expect(onChoices(loadFailed), findsNothing);
+        expect(chosenChoices(tester), ['2週間', '全体の体調', 'すべて']);
+      });
+
+      // Each read of the records is kept on its own, so each is asked for
+      // again on its own.
+      for (final read in _Read.values.where((r) => r != _Read.lastVisit)) {
+        testWidgets('still offers the periods and the conditions when the '
+            '${read.name} fail, says so under the precautions, and reads '
+            'them again', (tester) async {
+          failing.add(read);
+          useTallScreen(tester);
+          await openFailingChoices(tester);
+
+          expect(offeredChoices(tester), ['1週間', '2週間', '4週間', ...conditions]);
+          expect(onChoices(loadFailed), findsOneWidget);
+          expect(
+            tester.getRect(onChoices(loadFailed)).top,
+            greaterThanOrEqualTo(tester.getRect(onChoices('気を付けること')).bottom),
+          );
+
+          // Another period fails the same way, and is chosen all the same.
+          await press(tester, onChoices('1週間'));
+          await press(tester, onChoices('痛み'));
+          expect(chosenChoices(tester), ['1週間', '痛み']);
+          expect(onChoices(loadFailed), findsOneWidget);
+
+          await loadAgain(tester);
+          expect(onChoices(loadFailed), findsNothing);
+          expect(chosenChoices(tester), ['1週間', '痛み', 'すべて']);
+        });
+      }
+
+      testWidgets('offers nothing while the hour the day starts at cannot '
+          'be read, and reads it again', (tester) async {
+        final hour = _FailingHour(db);
+        useTallScreen(tester);
+        await pumpApp(tester, db: db, clock: clock, settings: hour);
+        await openReview(tester);
+        goToChoices(tester);
+        await tester.pumpAndSettle();
+
+        expect(onChoices(loadFailed), findsOneWidget);
+        expect(offered(), findsNothing);
+
+        hour.unreadable = false;
+        await press(tester, onChoices('読み込み直す'));
+        expect(onChoices(loadFailed), findsNothing);
+        expect(chosenChoices(tester), ['2週間', '全体の体調', 'すべて']);
+      });
+
+      for (final MapEntry(key: platform, value: scale)
+          in maxTextScales.entries) {
+        for (final onItsSide in [false, true]) {
+          testWidgets(
+            'at the largest text${onItsSide ? ' on a screen turned on its '
+                      'side' : ''}, nothing overflows when the period cannot '
+            'be worked out, and the button to read again is reached on '
+            '$platform',
+            (tester) async {
+              failing.add(_Read.lastVisit);
+              if (onItsSide) {
+                useScreenOnItsSide(tester);
+              } else {
+                useSmallPhone(tester);
+              }
+              await openFailingChoices(tester);
+              tester.platformDispatcher.textScaleFactorTestValue = scale;
+              await tester.pumpAndSettle();
+              expect(tester.takeException(), isNull);
+              expect(onChoices(loadFailed), findsOneWidget);
+
+              await tester.ensureVisible(onChoices('読み込み直す'));
+              await tester.pumpAndSettle();
+              await loadAgain(tester);
+              expect(tester.takeException(), isNull);
+              expect(onChoices(loadFailed), findsNothing);
+              expect(offered(), findsWidgets);
+            },
+            variant: TargetPlatformVariant.only(platform),
+          );
+        }
+      }
+    });
+
+    for (final MapEntry(key: platform, value: scale) in maxTextScales.entries) {
+      testWidgets(
+        'at the largest text nothing overflows down to its last choice, '
+        'which is large enough to press, on $platform',
+        (tester) async {
+          await visits.addVisit(d(9, 26), careProviderId: null);
+          await precautions.addToRefrain('寝る前の長いスマートフォン');
+          await logs.setScore(today, Condition.overall, Score(3));
+          useSmallPhone(tester, textScale: scale);
+          await openTrend(tester);
+          await openChoices(tester);
+          expect(tester.takeException(), isNull);
+          await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+
+          final last = onChoices('寝る前の長いスマートフォン　控える');
+          await scrollTo(tester, last);
+          expect(tester.takeException(), isNull);
+          await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+          await press(tester, last);
+          expect(chosenChoices(tester).last, '寝る前の長いスマートフォン　控える');
+        },
+        variant: TargetPlatformVariant.only(platform),
+      );
+    }
+  });
+
   group('at the largest text', () {
     for (final MapEntry(key: platform, value: scale) in maxTextScales.entries) {
       testWidgets(
@@ -2365,8 +3281,9 @@ void main() {
           // Today's line ends at the foot of the list as the page opens,
           // above the destinations.
           expect(todaysLine, findsOneWidget);
-          // The whole of it shows, under the choices: they leave the list
-          // the room of a line, and are sent to reach the rest of them.
+          // The whole of it shows, under what is above the list: that
+          // leaves the list the room of a line, and is sent where it has
+          // no room of its own.
           expect(
             tester.getTopLeft(todaysLine).dy,
             greaterThanOrEqualTo(listTop(tester)),

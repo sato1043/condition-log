@@ -7,6 +7,7 @@ import 'package:condition_log/data/database.dart';
 import 'package:condition_log/domain/calendar_day.dart';
 import 'package:condition_log/features/daily_log/data/drift_daily_log_repository.dart';
 import 'package:condition_log/features/daily_log/data/drift_precaution_repository.dart';
+import 'package:condition_log/features/trend_review/ui/trend_choices_line.dart';
 import 'package:condition_log/features/visits/data/drift_care_provider_repository.dart';
 import 'package:condition_log/features/visits/data/drift_visit_repository.dart';
 import 'package:condition_log/features/visits/domain/care_provider.dart';
@@ -50,6 +51,13 @@ void main() {
     await goBack(tester);
   }
 
+  // The page that chooses what the trend shows, from the line above the
+  // trend's list.
+  Future<void> openTrendChoices(WidgetTester tester) async {
+    await openReview(tester);
+    await press(tester, find.byType(TrendChoicesLine));
+  }
+
   /// Checks the page shown at its top and again at its bottom.
   Future<void> expectPageLargeEnough(
     WidgetTester tester, {
@@ -61,8 +69,8 @@ void main() {
     // first drawn while it loads grows after the drag stopped at what was
     // the end then.
     for (var drags = 0; drags < 2; drags++) {
-      // The first list with somewhere to go: the trend's page has its
-      // choices above its list, and they fit this screen.
+      // The first list with somewhere to go: on the trend's page what is
+      // above its list can be sent too, and fits this screen.
       final list = tester
           .stateList<ScrollableState>(lists)
           .where((list) => list.position.maxScrollExtent > 0)
@@ -92,7 +100,8 @@ void main() {
       reason:
           'What each thing that is sent has left to go, in the order of the '
           'page. Only the first with somewhere to go is sent: a page with '
-          'two of them, as the trend has where its choices do not fit, '
+          'two of them, as the trend has where what is above its list '
+          'does not fit, '
           'leaves the second short of its end.',
     );
     await expectLater(tester, meetsGuideline(guideline));
@@ -104,6 +113,7 @@ void main() {
     ('precautions', openEditor),
     ('settings', openSettings),
     ('review', openReview),
+    ('review choices', openTrendChoices),
     ('visits', openVisits),
     ('visit', openNewVisit),
     ('visits with a visit', openVisitsWithOne),

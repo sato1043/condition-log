@@ -5,6 +5,7 @@ import '../features/daily_log/ui/daily_log_page.dart';
 import '../features/daily_log/ui/precautions_page.dart';
 import '../features/settings/first_launch_about.dart';
 import '../features/settings/settings_page.dart';
+import '../features/trend_review/ui/trend_choices_page.dart';
 import '../features/trend_review/ui/trend_day_page.dart';
 import '../features/trend_review/ui/trend_review_page.dart';
 import '../features/visits/ui/care_providers_page.dart';
@@ -90,6 +91,10 @@ GoRoute _screensOf(Destination destination) => switch (destination) {
     path: TrendReviewPage.path,
     builder: (context, state) => const TrendReviewPage(),
     routes: [
+      GoRoute(
+        path: TrendChoicesPage.path,
+        builder: (context, state) => const TrendChoicesPage(),
+      ),
       GoRoute(
         path: TrendDayPage.path,
         // A location that names no day leads to the list the days are

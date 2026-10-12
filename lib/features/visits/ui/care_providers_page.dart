@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../ui/load_failure.dart';
 import '../../../ui/save_failure.dart';
+import '../../../ui/section_heading.dart';
 import '../../../ui/spoken_status.dart';
 import '../domain/care_provider.dart';
 import 'care_provider_names.dart';
@@ -55,7 +56,6 @@ class _CareProviderList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final textTheme = Theme.of(context).textTheme;
     final notifier = ref.read(careProvidersProvider.notifier);
     final reportFailure = saveFailureReporter(
       context,
@@ -122,15 +122,12 @@ class _CareProviderList extends ConsumerWidget {
             label: Text(l10n.addCareProvider),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Text(l10n.careProvidersUsualHint, style: textTheme.bodyLarge),
+        _Words(
+          l10n.careProvidersUsualHint,
+          room: const EdgeInsets.fromLTRB(16, 16, 16, 8),
         ),
         if (all.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(l10n.noCareProvidersYet, style: textTheme.bodyLarge),
-          ),
+          _Words(l10n.noCareProvidersYet, room: const EdgeInsets.all(16)),
         for (final c in inUse)
           _CareProviderTile(
             careProvider: c,
@@ -152,23 +149,10 @@ class _CareProviderList extends ConsumerWidget {
             ],
           ),
         if (notInUse.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
-            child: Semantics(
-              header: true,
-              headingLevel: 2,
-              child: Text(
-                l10n.careProvidersNotInUseHeading,
-                style: textTheme.titleMedium,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              l10n.careProvidersNotInUseHint,
-              style: textTheme.bodyLarge,
-            ),
+          SectionHeading(l10n.careProvidersNotInUseHeading),
+          _Words(
+            l10n.careProvidersNotInUseHint,
+            room: const EdgeInsets.symmetric(horizontal: 16),
           ),
           for (final c in notInUse)
             _CareProviderTile(
@@ -182,6 +166,27 @@ class _CareProviderList extends ConsumerWidget {
             ),
         ],
       ],
+    );
+  }
+}
+
+/// Words of the page's own among its lines, with [room] around them at the
+/// least. Clear of what the screen's sides hold, as the lines and the
+/// heading are: on a screen turned on its side, the camera's notch is at
+/// one of them, and the words start where the lines do.
+class _Words extends StatelessWidget {
+  const _Words(this.words, {required this.room});
+
+  final String words;
+  final EdgeInsets room;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      bottom: false,
+      minimum: room,
+      child: Text(words, style: Theme.of(context).textTheme.bodyLarge),
     );
   }
 }

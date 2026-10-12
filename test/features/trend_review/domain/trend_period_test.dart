@@ -88,6 +88,15 @@ void main() {
       );
     });
 
+    test('is offered among the others only while there is a visit', () {
+      expect(TrendPeriod.offeredFor(lastVisit), TrendPeriod.values);
+      expect(TrendPeriod.offeredFor(null), [
+        TrendPeriod.oneWeek,
+        TrendPeriod.twoWeeks,
+        TrendPeriod.fourWeeks,
+      ]);
+    });
+
     test('can be any of the weeks with or without a visit', () {
       for (final period in TrendPeriod.values) {
         expect(period.isAvailable(lastVisit), isTrue);

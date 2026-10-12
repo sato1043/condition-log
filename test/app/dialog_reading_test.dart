@@ -77,16 +77,6 @@ void main() {
           },
         ),
         (
-          // One place opens the period's and the condition's.
-          '項目',
-          'キャンセル',
-          'lib/features/trend_review/ui/trend_review_page.dart',
-          (tester) async {
-            await openReview(tester);
-            await press(tester, find.widgetWithText(ChoiceField, '項目'));
-          },
-        ),
-        (
           '受診先を足す',
           'キャンセル',
           'lib/features/visits/ui/care_provider_names.dart',

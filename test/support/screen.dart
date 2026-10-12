@@ -35,3 +35,19 @@ void useSmallPhone(WidgetTester tester, {double textScale = 1.0}) {
   addTearDown(tester.view.reset);
   addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 }
+
+/// A [smallPhone] screen turned on its side, with the camera's notch taking
+/// [notch] at its start. The settings are reset when the test ends.
+///
+/// At the default text: a test at a larger one sets it once its page is
+/// open. Today's page, which the app opens on, has no room for the largest
+/// text on a screen this low, and would fail the test before its own page
+/// is reached.
+void useScreenOnItsSide(WidgetTester tester, {double notch = 0}) {
+  tester.view.devicePixelRatio = 1;
+  tester.view.physicalSize = smallPhone.flipped;
+  tester.view.padding = FakeViewPadding(left: notch);
+  tester.view.viewPadding = FakeViewPadding(left: notch);
+  addTearDown(tester.view.reset);
+  addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+}
